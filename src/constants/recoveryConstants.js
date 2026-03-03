@@ -16,6 +16,7 @@ export const RECOVERY_TABLE_COLUMNS = [
     { key: 'recovery_code', label: 'Mã phiếu' },
     { key: 'recovery_date', label: 'Ngày thu hồi' },
     { key: 'customer_id', label: 'Khách hàng' },
+    { key: 'order_id', label: 'Đơn hàng liên kết' },
     { key: 'warehouse_id', label: 'Kho nhận' },
     { key: 'driver_name', label: 'NV vận chuyển' },
     { key: 'total_items', label: 'SL vỏ' },

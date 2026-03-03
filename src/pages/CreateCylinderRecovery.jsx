@@ -1,6 +1,7 @@
 import {
     Camera,
     CheckCircle2,
+    Link2,
     PackageCheck,
     Plus,
     ScanLine,
@@ -19,6 +20,7 @@ const CreateCylinderRecovery = () => {
     const editRecovery = state?.recovery;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customers, setCustomers] = useState([]);
+    const [customerOrders, setCustomerOrders] = useState([]);
     const [isScannerOpen, setIsScannerOpen] = useState(false);
     const html5QrCodeRef = useRef(null);
     const photoInputRef = useRef(null);
@@ -29,6 +31,7 @@ const CreateCylinderRecovery = () => {
         recovery_code: '',
         recovery_date: new Date().toISOString().split('T')[0],
         customer_id: '',
+        order_id: '',
         warehouse_id: 'HN',
         driver_name: '',
         notes: '',
@@ -55,6 +58,27 @@ const CreateCylinderRecovery = () => {
         const { data } = await supabase.from('customers').select('id, name').order('name');
         if (data) setCustomers(data);
     };
+
+    // Load orders for selected customer
+    const loadCustomerOrders = async (customerId) => {
+        if (!customerId) { setCustomerOrders([]); return; }
+        const { data } = await supabase
+            .from('orders')
+            .select('id, order_code, customer_name, quantity, product_type, assigned_cylinders, status')
+            .eq('customer_name', customers.find(c => c.id === customerId)?.name || '')
+            .in('status', ['HOAN_THANH', 'DANG_GIAO_HANG', 'CHO_DOI_SOAT', 'DA_DUYET'])
+            .order('created_at', { ascending: false });
+        setCustomerOrders(data || []);
+    };
+
+    // Load orders when customer changes
+    useEffect(() => {
+        if (formData.customer_id && customers.length > 0) {
+            loadCustomerOrders(formData.customer_id);
+        } else {
+            setCustomerOrders([]);
+        }
+    }, [formData.customer_id, customers]);
 
     const fetchItems = async (recoveryId) => {
         const { data } = await supabase.from('cylinder_recovery_items').select('*').eq('recovery_id', recoveryId);
@@ -202,6 +226,7 @@ const CreateCylinderRecovery = () => {
         setIsSubmitting(true);
         try {
             const payload = { ...formData, photos: photoUrls };
+            if (!payload.order_id) delete payload.order_id;
 
             let recoveryId;
             if (editRecovery) {
@@ -224,6 +249,64 @@ const CreateCylinderRecovery = () => {
             }));
             const { error: itemsError } = await supabase.from('cylinder_recovery_items').insert(itemPayloads);
             if (itemsError) throw itemsError;
+
+            // === POST-SAVE AUTOMATION ===
+            const serialNumbers = items.map(i => i.serial_number);
+
+            // 1. Cập nhật trạng thái vỏ bình → sẵn sàng, xoá tên KH
+            for (const serial of serialNumbers) {
+                await supabase
+                    .from('cylinders')
+                    .update({ status: 'sẵn sàng', customer_name: null, updated_at: new Date().toISOString() })
+                    .eq('serial_number', serial);
+            }
+
+            // 2. Giảm borrowed_cylinders của KH
+            const { data: customerData } = await supabase
+                .from('customers')
+                .select('borrowed_cylinders')
+                .eq('id', formData.customer_id)
+                .single();
+            if (customerData) {
+                const newBorrowed = Math.max(0, (customerData.borrowed_cylinders || 0) - items.length);
+                await supabase
+                    .from('customers')
+                    .update({ borrowed_cylinders: newBorrowed, updated_at: new Date().toISOString() })
+                    .eq('id', formData.customer_id);
+            }
+
+            // 3. Ghi log inventory_transactions (nhập kho vỏ)
+            const { data: invRecord } = await supabase
+                .from('inventory')
+                .select('id')
+                .eq('warehouse_id', formData.warehouse_id)
+                .eq('item_type', 'BINH')
+                .eq('item_name', 'Vỏ bình thu hồi')
+                .maybeSingle();
+
+            let inventoryId = invRecord?.id;
+            if (!inventoryId) {
+                const { data: newInv } = await supabase
+                    .from('inventory')
+                    .insert([{ warehouse_id: formData.warehouse_id, item_type: 'BINH', item_name: 'Vỏ bình thu hồi', quantity: 0 }])
+                    .select().single();
+                inventoryId = newInv?.id;
+            }
+
+            if (inventoryId) {
+                await supabase.from('inventory_transactions').insert([{
+                    inventory_id: inventoryId,
+                    transaction_type: 'IN',
+                    reference_id: recoveryId,
+                    reference_code: formData.recovery_code,
+                    quantity_changed: items.length,
+                    note: `Thu hồi ${items.length} vỏ bình từ KH`
+                }]);
+                await supabase
+                    .from('inventory')
+                    .update({ quantity: (invRecord?.quantity || 0) + items.length })
+                    .eq('id', inventoryId);
+            }
 
             alert('🎉 Lưu phiếu thu hồi thành công!');
             navigate('/thu-hoi-vo');
@@ -296,10 +379,24 @@ const CreateCylinderRecovery = () => {
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Khách hàng *</label>
-                            <select value={formData.customer_id} onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none cursor-pointer">
+                            <select value={formData.customer_id} onChange={(e) => setFormData({ ...formData, customer_id: e.target.value, order_id: '' })} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none cursor-pointer">
                                 <option value="">-- Chọn khách hàng --</option>
                                 {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1"><Link2 className="w-3 h-3" /> Đơn hàng liên kết</label>
+                            <select value={formData.order_id} onChange={(e) => setFormData({ ...formData, order_id: e.target.value })} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none cursor-pointer">
+                                <option value="">-- Không liên kết --</option>
+                                {customerOrders.map(o => <option key={o.id} value={o.id}>ĐH {o.order_code} — {o.quantity} {o.product_type === 'BINH' ? 'bình' : 'máy'} ({o.status})</option>)}
+                            </select>
+                            {formData.order_id && (() => {
+                                const selectedOrder = customerOrders.find(o => o.id === formData.order_id);
+                                if (selectedOrder?.assigned_cylinders?.length > 0) {
+                                    return <p className="text-xs text-blue-600 font-medium mt-1">Bình đã giao: {selectedOrder.assigned_cylinders.join(', ')}</p>;
+                                }
+                                return null;
+                            })()}
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Kho nhận về *</label>

@@ -10,6 +10,7 @@ CREATE TABLE cylinder_recoveries (
     notes TEXT,
     total_items INTEGER DEFAULT 0,
     status VARCHAR(50) NOT NULL DEFAULT 'CHO_DUYET',
+    order_id UUID REFERENCES orders(id) ON DELETE SET NULL, -- Đơn hàng liên kết
     photos TEXT[] DEFAULT '{}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

@@ -1,8 +1,10 @@
 import {
     Package,
-    Plus
+    Plus,
+    ScanLine,
+    X
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     CUSTOMER_CATEGORIES,
@@ -23,6 +25,13 @@ const CreateOrder = () => {
     const [shippersList, setShippersList] = useState([]);
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [editReason, setEditReason] = useState('');
+    const [assignedCylinders, setAssignedCylinders] = useState([]);
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [scanTargetIndex, setScanTargetIndex] = useState(-1);
+    const [scanCount, setScanCount] = useState(0);
+    const html5QrCodeRef = useRef(null);
+    const assignedCylindersRef = useRef(assignedCylinders);
+    useEffect(() => { assignedCylindersRef.current = assignedCylinders; }, [assignedCylinders]);
 
     const getNewOrderCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -105,15 +114,29 @@ const CreateOrder = () => {
     };
 
     const handleQuantityChange = (e) => {
-        const value = e.target.value.replace(/\D/g, ''); // Remove non-numeric characters
+        const value = e.target.value.replace(/\D/g, '');
 
         if (value === '') {
             setFormData({ ...formData, quantity: 0 });
+            setAssignedCylinders([]);
             return;
         }
 
         const parsedValue = parseInt(value, 10);
         setFormData({ ...formData, quantity: parsedValue });
+
+        // Only auto-resize for BINH product type
+        if (formData.productType === 'BINH') {
+            setAssignedCylinders(prev => {
+                const newArr = [...prev];
+                if (parsedValue > newArr.length) {
+                    for (let i = newArr.length; i < parsedValue; i++) newArr.push('');
+                } else {
+                    newArr.length = parsedValue;
+                }
+                return newArr;
+            });
+        }
     };
 
     const handleUnitPriceChange = (e) => {
@@ -150,6 +173,122 @@ const CreateOrder = () => {
             });
         }
     };
+
+    // Initialize assignedCylinders when editing
+    useEffect(() => {
+        if (editOrder?.assigned_cylinders) {
+            setAssignedCylinders(editOrder.assigned_cylinders);
+        }
+    }, [editOrder]);
+
+    const handleCylinderSerialChange = (index, value) => {
+        setAssignedCylinders(prev => {
+            const newArr = [...prev];
+            newArr[index] = value;
+            return newArr;
+        });
+    };
+
+    // Continuous barcode scanner for cylinder assignment
+    const lastScannedRef = useRef('');
+
+    const startCylinderScanner = useCallback(async (targetIndex) => {
+        // Stop previous scanner if any
+        if (html5QrCodeRef.current) {
+            try { await html5QrCodeRef.current.stop(); } catch { }
+            html5QrCodeRef.current = null;
+        }
+
+        setScanTargetIndex(targetIndex);
+        setScanCount(0);
+        lastScannedRef.current = '';
+        setIsScannerOpen(true);
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+
+        const formatsToSupport = [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.QR_CODE,
+        ];
+
+        let currentIdx = targetIndex;
+
+        setTimeout(async () => {
+            try {
+                const qr = new Html5Qrcode('order-barcode-reader', { formatsToSupport, verbose: false });
+                html5QrCodeRef.current = qr;
+                await qr.start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10,
+                        qrbox: (w, h) => ({ width: Math.floor(w * 0.85), height: Math.floor(h * 0.35) }),
+                        disableFlip: false,
+                    },
+                    (decodedText) => {
+                        // Skip if same as last scanned (debounce)
+                        if (decodedText === lastScannedRef.current) return;
+                        lastScannedRef.current = decodedText;
+
+                        const currentArr = assignedCylindersRef.current;
+                        // Skip if already in the list
+                        if (currentArr.includes(decodedText)) return;
+
+                        // Fill the current target index
+                        setAssignedCylinders(prev => {
+                            const newArr = [...prev];
+                            newArr[currentIdx] = decodedText;
+                            return newArr;
+                        });
+                        setScanCount(prev => prev + 1);
+
+                        // Find next empty slot
+                        const updatedArr = [...currentArr];
+                        updatedArr[currentIdx] = decodedText;
+                        const nextEmpty = updatedArr.findIndex((s, i) => i > currentIdx && !s);
+                        const fallbackEmpty = updatedArr.findIndex((s) => !s);
+                        const nextIdx = nextEmpty !== -1 ? nextEmpty : fallbackEmpty;
+
+                        if (nextIdx !== -1 && nextIdx !== currentIdx) {
+                            currentIdx = nextIdx;
+                            setScanTargetIndex(nextIdx);
+                            // Reset last scanned after short delay to allow scanning same type
+                            setTimeout(() => { lastScannedRef.current = ''; }, 1500);
+                        } else {
+                            // All slots filled → auto close
+                            setTimeout(() => stopCylinderScanner(), 500);
+                        }
+                    },
+                    () => { }
+                );
+            } catch (err) {
+                console.error('Scanner error:', err);
+                alert('\u274c Kh\u00f4ng m\u1edf \u0111\u01b0\u1ee3c camera: ' + err);
+                setIsScannerOpen(false);
+            }
+        }, 300);
+    }, []);
+
+    // Find first empty slot and start scanning
+    const startScanAll = useCallback(() => {
+        const firstEmpty = assignedCylinders.findIndex(s => !s);
+        if (firstEmpty === -1) {
+            alert('\u0110\u00e3 g\u00e1n \u0111\u1ee7 m\u00e3 b\u00ecnh!');
+            return;
+        }
+        startCylinderScanner(firstEmpty);
+    }, [assignedCylinders, startCylinderScanner]);
+
+    const stopCylinderScanner = useCallback(async () => {
+        if (html5QrCodeRef.current) {
+            try { await html5QrCodeRef.current.stop(); } catch { }
+            html5QrCodeRef.current = null;
+        }
+        setIsScannerOpen(false);
+        setScanTargetIndex(-1);
+    }, []);
 
     const handleCreateOrder = async () => {
         if (!formData.customerId || !formData.recipientName || !formData.recipientAddress || !formData.recipientPhone || formData.quantity <= 0) {
@@ -191,6 +330,7 @@ const CreateOrder = () => {
                 promotion_code: formData.promotion,
                 shipper_id: formData.shipperId || null,
                 shipping_fee: formData.shippingFee || 0,
+                assigned_cylinders: formData.productType === 'BINH' ? assignedCylinders.filter(Boolean) : null,
                 status: editOrder ? editOrder.status : initialStatus,
                 ordered_by: editOrder ? editOrder.ordered_by : currentUser
             };
@@ -439,6 +579,57 @@ const CreateOrder = () => {
                                     </div>
                                 </div>
 
+                                {/* Dynamic Cylinder Serial Assignment */}
+                                {formData.productType === 'BINH' && formData.quantity > 0 && (
+                                    <div className="mt-6 p-5 bg-[#EFF6FF] border border-[#BFDBFE] space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-xs font-medium text-[#2563EB] uppercase tracking-wide flex items-center gap-2" style={{ fontFamily: '"Roboto", sans-serif' }}>
+                                                <ScanLine className="w-4 h-4" /> Gán mã bình ({assignedCylinders.filter(Boolean).length}/{formData.quantity})
+                                            </h4>
+                                            <button
+                                                type="button"
+                                                onClick={startScanAll}
+                                                className="px-3 py-1.5 bg-[#2563EB] text-white text-xs font-medium hover:bg-[#1D4ED8] transition-all flex items-center gap-1.5"
+                                            >
+                                                <ScanLine className="w-3.5 h-3.5" /> Quét tất cả
+                                            </button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {assignedCylinders.map((serial, idx) => (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <span className="text-xs font-bold text-gray-400 w-6 text-right">{idx + 1}.</span>
+                                                    <input
+                                                        type="text"
+                                                        value={serial}
+                                                        onChange={(e) => handleCylinderSerialChange(idx, e.target.value)}
+                                                        placeholder={`Mã serial bình ${idx + 1}...`}
+                                                        className="flex-1 px-3 py-2.5 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                                        style={{ fontFamily: '"Roboto", sans-serif' }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => startCylinderScanner(idx)}
+                                                        className="px-3 py-2.5 bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition-all flex items-center gap-1 text-xs font-medium"
+                                                        title="Quét barcode"
+                                                    >
+                                                        <ScanLine className="w-4 h-4" />
+                                                    </button>
+                                                    {serial && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleCylinderSerialChange(idx, '')}
+                                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 transition-all"
+                                                            title="Xóa"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>12. Khoa sử dụng máy / Mã máy</label>
                                     <input
@@ -554,6 +745,26 @@ const CreateOrder = () => {
                                 Xác nhận & Lưu
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Barcode Scanner Modal for Cylinder Assignment */}
+            {isScannerOpen && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+                        <div className="p-4 flex items-center justify-between bg-gray-50 border-b">
+                            <div className="flex items-center gap-2">
+                                <ScanLine className="w-5 h-5 text-blue-600" />
+                                <span className="font-bold text-gray-800">Quét liên tục</span>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">{scanCount} đã quét → bình #{scanTargetIndex + 1}</span>
+                            </div>
+                            <button onClick={stopCylinderScanner} className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div id="order-barcode-reader" className="w-full" />
+                        <p className="text-center text-sm text-gray-500 p-3 font-medium">Quét xong tự nhảy sang bình tiếp theo — Đóng khi đủ</p>
                     </div>
                 </div>
             )}

@@ -24,11 +24,18 @@ const CylinderRecoveries = () => {
     useEffect(() => {
         fetchRecoveries();
         loadCustomers();
+        loadOrders();
     }, []);
 
     const loadCustomers = async () => {
         const { data } = await supabase.from('customers').select('id, name').order('name');
         if (data) setCustomers(data);
+    };
+
+    const [orders, setOrders] = useState([]);
+    const loadOrders = async () => {
+        const { data } = await supabase.from('orders').select('id, order_code').order('created_at', { ascending: false });
+        if (data) setOrders(data);
     };
 
     const fetchRecoveries = async () => {
@@ -58,6 +65,12 @@ const CylinderRecoveries = () => {
 
     const getCustomerName = (id) => customers.find(c => c.id === id)?.name || id || '—';
     const getWarehouseLabel = (id) => WAREHOUSES.find(w => w.id === id)?.label || id;
+    const getSupplierName = (id) => customers.find(c => c.id === id)?.name || id || '—';
+    const getOrderCode = (id) => {
+        if (!id) return '—';
+        const order = orders.find(o => o.id === id);
+        return order ? `ĐH ${order.order_code}` : '—';
+    };
 
     const getStatusBadge = (status) => {
         const s = RECOVERY_STATUSES.find(r => r.id === status);
@@ -191,6 +204,7 @@ const CylinderRecoveries = () => {
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Phiếu</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Ngày</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Khách hàng</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Đơn hàng</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-left">Kho nhận</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">SL vỏ</th>
                                     <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-center">Trạng thái</th>
@@ -216,6 +230,7 @@ const CylinderRecoveries = () => {
                                             {new Date(r.recovery_date).toLocaleDateString('vi-VN')}
                                         </td>
                                         <td className="px-6 py-4 font-medium text-slate-800">{getCustomerName(r.customer_id)}</td>
+                                        <td className="px-6 py-4 text-sm font-medium text-blue-600">{getOrderCode(r.order_id)}</td>
                                         <td className="px-6 py-4 text-sm text-slate-600">{getWarehouseLabel(r.warehouse_id)}</td>
                                         <td className="px-6 py-4 text-center font-black text-slate-700">{r.total_items}</td>
                                         <td className="px-6 py-4 text-center">{getStatusBadge(r.status)}</td>
