@@ -268,6 +268,22 @@ const DASHBOARD_FEATURES = [
     path: "/tao-phieu-xuat",
   },
   {
+    id: "recovery",
+    title: "Thu hồi vỏ bình",
+    description: "Quản lý phiếu thu hồi vỏ bình từ khách hàng, quét barcode và xuất PDF.",
+    icon: PackageCheck,
+    color: "teal",
+    path: "/thu-hoi-vo",
+  },
+  {
+    id: "create-recovery",
+    title: "Tạo phiếu thu hồi",
+    description: "Lập phiếu thu hồi mới: chọn KH, quét barcode vỏ bình, chụp ảnh hiện trường.",
+    icon: Plus,
+    color: "cyan",
+    path: "/tao-phieu-thu-hoi",
+  },
+  {
     id: "materials",
     title: "Danh sách nguồn vật tư",
     description: "Lưu trữ các danh mục cấu kiện cơ bản phục vụ lắp ráp hệ thống (Bình khí, Máy Plasma).",
