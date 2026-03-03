@@ -9,9 +9,9 @@ import {
     CYLINDER_VOLUMES,
     GAS_TYPES,
     HANDLE_TYPES,
-    MACHINE_TYPES,
     VALVE_TYPES
 } from '../constants/machineConstants';
+import { WAREHOUSES } from '../constants/orderConstants';
 import { supabase } from '../supabase/config';
 
 const CreateCylinder = () => {
@@ -28,11 +28,31 @@ const CreateCylinder = () => {
         volume: 'bình 4L/ CGA870',
         gas_type: 'AirMAC',
         valve_type: 'Van Messer/Phi 6/ CB Trắng',
-        handle_type: 'Có quai'
+        handle_type: 'Có quai',
+        customer_id: '',
+        warehouse_id: 'HN'
     };
 
     const initialFormState = editCylinder || defaultState;
     const [formData, setFormData] = useState(initialFormState);
+    const [customersList, setCustomersList] = useState([]);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('customers')
+                    .select('id, name')
+                    .order('name');
+                if (!error && data) {
+                    setCustomersList(data);
+                }
+            } catch (err) {
+                console.error('Error fetching customers:', err);
+            }
+        };
+        fetchCustomers();
+    }, []);
 
     const handleCreateCylinder = async () => {
         if (!formData.serial_number) {
@@ -151,6 +171,27 @@ const CreateCylinder = () => {
                                     className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-500 font-bold text-base shadow-sm cursor-pointer text-gray-900"
                                 >
                                     {MACHINE_TYPES.filter(t => t.id === 'BV' || t.id === 'TM').map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Khách hàng</label>
+                                <select
+                                    value={formData.customer_id || ''}
+                                    onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
+                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-500 font-bold text-base shadow-sm cursor-pointer text-gray-900"
+                                >
+                                    <option value="">-- Trống (Thuộc kho) --</option>
+                                    {customersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Kho *</label>
+                                <select
+                                    value={formData.warehouse_id || 'HN'}
+                                    onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
+                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-teal-100 focus:border-teal-500 font-bold text-base shadow-sm cursor-pointer text-gray-900"
+                                >
+                                    {WAREHOUSES.map(w => <option key={w.id} value={w.id}>{w.label}</option>)}
                                 </select>
                             </div>
                         </div>

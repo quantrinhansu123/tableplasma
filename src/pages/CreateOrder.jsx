@@ -20,6 +20,7 @@ const CreateOrder = () => {
     const { role, user } = usePermissions();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customersList, setCustomersList] = useState([]);
+    const [shippersList, setShippersList] = useState([]);
 
     const getNewOrderCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -38,7 +39,8 @@ const CreateOrder = () => {
         department: '',
         promotion: '',
         shipperId: '',
-        shippingFee: 0
+        shippingFee: 0,
+        note: ''
     };
 
     const initialFormState = editOrder ? {
@@ -57,7 +59,8 @@ const CreateOrder = () => {
         department: editOrder.department || '',
         promotion: editOrder.promotion_code || '',
         shipperId: editOrder.shipper_id || '',
-        shippingFee: editOrder.shipping_fee || 0
+        shippingFee: editOrder.shipping_fee || 0,
+        note: editOrder.note || ''
     } : defaultState;
 
     const [formData, setFormData] = useState(initialFormState);
@@ -210,46 +213,44 @@ const CreateOrder = () => {
     };
 
     return (
-        <div className="p-4 md:p-8 max-w-[1200px] mx-auto font-sans min-h-screen noise-bg">
-            {/* Animated Blobs */}
-            <div className="blob blob-blue w-[400px] h-[400px] -top-20 -left-20 opacity-20"></div>
-            <div className="blob blob-indigo w-[300px] h-[300px] top-1/2 -right-20 opacity-20"></div>
-
+        <div className="p-4 md:p-8 max-w-[1200px] mx-auto min-h-screen bg-[#F8F9FA]" style={{ fontFamily: '"Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
             {/* Main Content Card */}
-            <div className="bg-white/80 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] shadow-2xl shadow-blue-900/10 border border-white overflow-hidden relative z-10">
-                <div className="p-6 md:p-8 border-b border-blue-50 bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-                    <h3 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                        <div className="w-8 h-8 bg-white/20 backdrop-blur-md rounded-lg flex items-center justify-center text-white shadow-inner">
+            <div className="bg-white shadow-sm border border-[#E5E7EB] overflow-hidden relative z-10">
+                <div className="p-6 md:p-8 border-b border-[#E5E7EB] bg-[#2563EB] text-white">
+                    <h3 className="text-xl font-semibold flex items-center gap-3" style={{ fontFamily: '"Roboto", sans-serif' }}>
+                        <div className="w-8 h-8 bg-white/20 flex items-center justify-center text-white">
                             <Plus className="w-5 h-5" />
                         </div>
                         {editOrder ? 'Cập nhật đơn hàng' : 'Thông tin đơn hàng'}
                     </h3>
-                    <p className="text-blue-100 text-xs md:text-sm mt-1 md:ml-10">Vui lòng điền đầy đủ các thông tin bắt buộc được đánh dấu (*)</p>
+                    <p className="text-blue-100 text-sm mt-2 ml-11" style={{ fontFamily: '"Roboto", sans-serif' }}>Vui lòng điền đầy đủ các thông tin bắt buộc được đánh dấu (*)</p>
                 </div>
 
                 <div className="p-6 md:p-10 space-y-8 md:space-y-10">
                     {/* Section 1: Thông tin định danh */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">1. Mã đơn hàng (Tự động)</label>
-                            <input value={formData.orderCode} disabled className="w-full px-5 py-4 bg-gray-100 border border-gray-200 rounded-2xl font-black text-gray-500 text-base cursor-not-allowed shadow-inner" />
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>1. Mã đơn hàng (Tự động)</label>
+                            <input value={formData.orderCode} disabled className="w-full px-4 py-3 bg-[#F3F4F6] border border-[#D1D5DB] font-medium text-[#6B7280] text-sm cursor-not-allowed" style={{ fontFamily: '"Roboto", sans-serif' }} />
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">2. Loại khách hàng *</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>2. Loại khách hàng *</label>
                             <select
                                 value={formData.customerCategory}
                                 onChange={(e) => setFormData({ ...formData, customerCategory: e.target.value })}
-                                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                style={{ fontFamily: '"Roboto", sans-serif' }}
                             >
                                 {CUSTOMER_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
                             </select>
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">3. Kho</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>3. Kho</label>
                             <select
                                 value={formData.warehouse}
                                 onChange={(e) => setFormData({ ...formData, warehouse: e.target.value })}
-                                className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                style={{ fontFamily: '"Roboto", sans-serif' }}
                             >
                                 {WAREHOUSES.map(w => <option key={w.id} value={w.id}>{w.label}</option>)}
                             </select>
@@ -257,15 +258,16 @@ const CreateOrder = () => {
                     </div>
 
                     {/* Section 2: Thông tin khách hàng & Người nhận */}
-                    <div className="p-6 md:p-8 bg-blue-50/40 rounded-[1.5rem] md:rounded-[2.5rem] border border-blue-100 space-y-6 md:space-y-8">
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-2 ml-1">
+                    <div className="p-6 md:p-8 bg-[#EFF6FF] border border-[#BFDBFE] space-y-6 md:space-y-8">
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-[#2563EB] uppercase tracking-wide flex items-center gap-2" style={{ fontFamily: '"Roboto", sans-serif' }}>
                                 <Package className="w-4 h-4" /> 4. Chọn Khách hàng *
                             </label>
                             <select
                                 value={formData.customerId}
                                 onChange={handleCustomerChange}
-                                className="w-full px-5 py-4 bg-white border border-blue-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base shadow-md transition-all cursor-pointer"
+                                className="w-full px-4 py-3 bg-white border border-[#93C5FD] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all cursor-pointer"
+                                style={{ fontFamily: '"Roboto", sans-serif' }}
                             >
                                 <option value="">-- Chọn khách hàng trong hệ thống --</option>
                                 {customersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -273,32 +275,35 @@ const CreateOrder = () => {
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-2 gap-6 md:gap-8">
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">5. Tên người nhận *</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>5. Tên người nhận *</label>
                                 <input
                                     value={formData.recipientName}
                                     onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
                                     placeholder="Hệ thống tự động hiển thị..."
-                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base shadow-sm transition-all"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 />
                             </div>
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">7. SĐT người nhận *</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>7. SĐT người nhận *</label>
                                 <input
                                     value={formData.recipientPhone}
                                     onChange={(e) => setFormData({ ...formData, recipientPhone: e.target.value })}
                                     placeholder="Ví dụ: 0399749111"
-                                    className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base shadow-sm transition-all"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 />
                             </div>
                         </div>
-                        <div className="space-y-3">
-                            <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">6. Địa chỉ nhận *</label>
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>6. Địa chỉ nhận *</label>
                             <input
                                 value={formData.recipientAddress}
                                 onChange={(e) => setFormData({ ...formData, recipientAddress: e.target.value })}
                                 placeholder="Hệ thống tự động hiển thị..."
-                                className="w-full px-5 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base shadow-sm transition-all"
+                                className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                style={{ fontFamily: '"Roboto", sans-serif' }}
                             />
                         </div>
                     </div>
@@ -306,87 +311,95 @@ const CreateOrder = () => {
                     {/* Section 3: Chi tiết đơn hàng & Hàng hóa */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
                         <div className="space-y-6 md:space-y-8">
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">8. Loại đơn hàng *</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>8. Loại đơn hàng *</label>
                                 <select
                                     value={formData.orderType}
                                     onChange={(e) => setFormData({ ...formData, orderType: e.target.value })}
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 >
                                     {ORDER_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                                 </select>
                             </div>
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">9. Ghi chú</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>9. Ghi chú</label>
                                 <textarea
                                     rows="4"
                                     value={formData.note}
                                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                                     placeholder="Thông tin bổ sung để admin duyệt đơn..."
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-medium text-base transition-all shadow-sm resize-none"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-normal text-sm transition-all resize-none"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-6 md:space-y-8">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">10. Hàng hóa *</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>10. Hàng hóa *</label>
                                     <select
                                         value={formData.productType}
                                         onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                        className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                        style={{ fontFamily: '"Roboto", sans-serif' }}
                                     >
                                         {PRODUCT_TYPES.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
                                     </select>
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">11. Số lượng *</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>11. Số lượng *</label>
                                     <input
                                         type="text"
                                         value={formatNumber(formData.quantity)}
                                         onChange={handleQuantityChange}
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-black text-lg text-blue-700 transition-all shadow-sm"
+                                        className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-semibold text-base text-[#2563EB] transition-all"
+                                        style={{ fontFamily: '"Roboto", sans-serif' }}
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">11b. Đơn giá (VNĐ) *</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>11b. Đơn giá (VNĐ) *</label>
                                     <input
                                         type="text"
                                         value={formatNumber(formData.unitPrice)}
                                         onChange={handleUnitPriceChange}
-                                        className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 font-black text-lg text-emerald-700 transition-all shadow-sm"
+                                        className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#10B981] focus:border-[#10B981] font-semibold text-base text-[#059669] transition-all"
+                                        style={{ fontFamily: '"Roboto", sans-serif' }}
                                     />
                                 </div>
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-emerald-600 uppercase tracking-[0.2em] ml-1">11c. Thành tiền (VNĐ)</label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-medium text-[#059669] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>11c. Thành tiền (VNĐ)</label>
                                     <input
                                         type="text"
                                         disabled
                                         value={formatNumber(calculatedTotalAmount)}
-                                        className="w-full px-5 py-4 bg-emerald-50 border border-emerald-100 rounded-2xl font-black text-lg text-emerald-800 transition-all shadow-inner opacity-80 cursor-not-allowed"
+                                        className="w-full px-4 py-3 bg-[#D1FAE5] border border-[#A7F3D0] font-semibold text-base text-[#065F46] cursor-not-allowed"
+                                        style={{ fontFamily: '"Roboto", sans-serif' }}
                                     />
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">12. Khoa sử dụng máy / Mã máy</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>12. Khoa sử dụng máy / Mã máy</label>
                                 <input
                                     value={formData.department}
                                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                     placeholder="Ví dụ: Mã máy đang sử dụng"
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 />
                             </div>
-                            <div className="space-y-3">
-                                <label className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">13. Khuyến mãi (Áp dụng mã)</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>13. Khuyến mãi (Áp dụng mã)</label>
                                 <select
                                     value={formData.promotion}
                                     onChange={(e) => setFormData({ ...formData, promotion: e.target.value })}
-                                    className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-base transition-all shadow-sm"
+                                    className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                    style={{ fontFamily: '"Roboto", sans-serif' }}
                                 >
                                     <option value="">-- Không có mã khuyến mãi --</option>
                                     <option value="KMB02">KMB02 - Ưu đãi bình mới</option>
@@ -394,28 +407,30 @@ const CreateOrder = () => {
                                 </select>
                             </div>
 
-                            <div className="pt-4 mt-4 border-t border-gray-100 space-y-6">
-                                <h4 className="text-[11px] font-black text-rose-500 uppercase tracking-[0.2em] ml-1">14. Phí Giao Hàng & Đơn vị VC</h4>
+                            <div className="pt-4 mt-4 border-t border-[#E5E7EB] space-y-6">
+                                <h4 className="text-xs font-medium text-[#DC2626] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>14. Phí Giao Hàng & Đơn vị VC</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-                                    <div className="space-y-3">
+                                    <div className="space-y-2">
                                         <select
                                             value={formData.shipperId}
                                             onChange={(e) => setFormData({ ...formData, shipperId: e.target.value })}
-                                            className="w-full px-5 py-4 bg-white border border-rose-200 rounded-2xl outline-none focus:ring-4 focus:ring-rose-100 focus:border-rose-500 font-bold text-base transition-all shadow-sm"
+                                            className="w-full px-4 py-3 bg-white border border-[#FCA5A5] outline-none focus:ring-2 focus:ring-[#DC2626] focus:border-[#DC2626] font-medium text-sm transition-all"
+                                            style={{ fontFamily: '"Roboto", sans-serif' }}
                                         >
                                             <option value="">-- Chọn Đơn vị VC (Tuỳ chọn) --</option>
                                             {shippersList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                                         </select>
                                     </div>
-                                    <div className="space-y-3 relative">
+                                    <div className="space-y-2 relative">
                                         <input
                                             type="text"
                                             value={formatNumber(formData.shippingFee)}
                                             onChange={handleShippingFeeChange}
                                             placeholder="Nhập cước phí..."
-                                            className="w-full px-5 py-4 pl-12 bg-white border border-rose-200 rounded-2xl outline-none focus:ring-4 focus:ring-rose-100 focus:border-rose-500 font-black text-lg text-rose-700 transition-all shadow-sm placeholder:text-rose-300 placeholder:font-medium"
+                                            className="w-full px-4 py-3 pl-10 bg-white border border-[#FCA5A5] outline-none focus:ring-2 focus:ring-[#DC2626] focus:border-[#DC2626] font-semibold text-base text-[#DC2626] transition-all placeholder:text-[#FCA5A5] placeholder:font-normal"
+                                            style={{ fontFamily: '"Roboto", sans-serif' }}
                                         />
-                                        <span className="absolute left-5 top-[9px] text-rose-400 font-black">đ</span>
+                                        <span className="absolute left-4 top-[11px] text-[#F87171] font-medium text-sm">đ</span>
                                     </div>
                                 </div>
                             </div>
@@ -423,22 +438,24 @@ const CreateOrder = () => {
                     </div>
                 </div>
 
-                <div className="p-6 md:p-10 bg-gray-50 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <p className="text-sm text-gray-400 font-medium italic w-full text-center md:text-left">* Vui lòng kiểm tra kỹ thông tin trước khi nhấn Xác nhận.</p>
+                <div className="p-6 md:p-10 bg-[#F9FAFB] border-t border-[#E5E7EB] flex flex-col md:flex-row items-center justify-between gap-6">
+                    <p className="text-sm text-[#6B7280] font-normal w-full text-center md:text-left" style={{ fontFamily: '"Roboto", sans-serif' }}>* Vui lòng kiểm tra kỹ thông tin trước khi nhấn Xác nhận.</p>
                     <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                         <button
-                            onClick={resetForm}
-                            className="w-full sm:w-auto px-6 md:px-10 py-4 md:py-5 bg-white border border-gray-200 text-gray-500 font-bold hover:bg-gray-100 rounded-2xl transition-all shadow-sm"
+                            onClick={() => navigate('/danh-sach-don-hang')}
+                            className="w-full sm:w-auto px-8 py-3 bg-white border border-[#D1D5DB] text-[#374151] font-medium hover:bg-[#F3F4F6] transition-all"
+                            style={{ fontFamily: '"Roboto", sans-serif' }}
                         >
                             Hủy bỏ
                         </button>
                         <button
                             onClick={handleCreateOrder}
                             disabled={isSubmitting}
-                            className={`w-full sm:w-auto px-10 md:px-16 py-4 md:py-5 text-white font-black text-lg rounded-2xl shadow-2xl transition-all ${isSubmitting
-                                ? 'bg-gray-400 cursor-not-allowed shadow-none'
-                                : 'bg-gradient-to-r from-blue-600 to-indigo-700 shadow-blue-200 hover:scale-[1.02] active:scale-95'
+                            className={`w-full sm:w-auto px-10 py-3 text-white font-medium text-base transition-all ${isSubmitting
+                                ? 'bg-[#9CA3AF] cursor-not-allowed'
+                                : 'bg-[#2563EB] hover:bg-[#1D4ED8]'
                                 }`}
+                            style={{ fontFamily: '"Roboto", sans-serif' }}
                         >
                             {isSubmitting ? 'Đang lưu đơn...' : editOrder ? 'Xác nhận cập nhật' : 'Xác nhận tạo đơn hàng'}
                         </button>

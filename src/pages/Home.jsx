@@ -9,6 +9,7 @@ import {
   Menu,
   MonitorIcon,
   Package,
+  PackageMinus,
   PackagePlus,
   Plus,
   Search,
@@ -74,6 +75,12 @@ const SIDEBAR_ITEMS = [
     label: "Nhập hàng từ NCC",
     icon: PackagePlus,
     path: "/nhap-hang",
+  },
+  {
+    id: "goods-issues",
+    label: "Xuất trả về NCC",
+    icon: PackageMinus,
+    path: "/xuat-kho",
   },
   {
     id: "shippers",
@@ -236,6 +243,22 @@ const DASHBOARD_FEATURES = [
     icon: Plus,
     color: "green",
     path: "/tao-phieu-nhap",
+  },
+  {
+    id: "goods-issues",
+    title: "Xuất trả về NCC",
+    description: "Quản lý phiếu xuất trả vỏ bình hoặc máy móc về cho nhà cung cấp.",
+    icon: PackageMinus,
+    color: "rose",
+    path: "/xuat-kho",
+  },
+  {
+    id: "create-goods-issue",
+    title: "Tạo phiếu xuất trả",
+    description: "Lập phiếu xuất mới: chọn kho, NCC nhận và điền hàng hóa cần trả.",
+    icon: Plus,
+    color: "orange",
+    path: "/tao-phieu-xuat",
   },
   {
     id: "materials",

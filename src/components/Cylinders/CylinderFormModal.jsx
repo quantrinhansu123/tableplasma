@@ -8,6 +8,7 @@ import {
     MACHINE_TYPES,
     VALVE_TYPES
 } from '../../constants/machineConstants';
+import { WAREHOUSES } from '../../constants/orderConstants';
 import { supabase } from '../../supabase/config';
 
 export default function CylinderFormModal({ cylinder, onClose, onSuccess }) {
@@ -23,10 +24,30 @@ export default function CylinderFormModal({ cylinder, onClose, onSuccess }) {
         volume: 'bình 4L/ CGA870',
         gas_type: 'AirMAC',
         valve_type: 'Van Messer/Phi 6/ CB Trắng',
-        handle_type: 'Có quai'
+        handle_type: 'Có quai',
+        customer_id: '',
+        warehouse_id: 'HN'
     };
 
     const [formData, setFormData] = useState(defaultState);
+    const [customersList, setCustomersList] = useState([]);
+
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('customers')
+                    .select('id, name')
+                    .order('name');
+                if (!error && data) {
+                    setCustomersList(data);
+                }
+            } catch (err) {
+                console.error('Error fetching customers:', err);
+            }
+        };
+        fetchCustomers();
+    }, []);
 
     useEffect(() => {
         if (isEdit) {
@@ -38,7 +59,9 @@ export default function CylinderFormModal({ cylinder, onClose, onSuccess }) {
                 volume: cylinder.volume || 'bình 4L/ CGA870',
                 gas_type: cylinder.gas_type || 'AirMAC',
                 valve_type: cylinder.valve_type || 'Van Messer/Phi 6/ CB Trắng',
-                handle_type: cylinder.handle_type || 'Có quai'
+                handle_type: cylinder.handle_type || 'Có quai',
+                customer_id: cylinder.customer_id || '',
+                warehouse_id: cylinder.warehouse_id || 'HN'
             });
         }
     }, [cylinder, isEdit]);
@@ -77,6 +100,7 @@ export default function CylinderFormModal({ cylinder, onClose, onSuccess }) {
         try {
             const payload = { ...formData, updated_at: new Date().toISOString() };
             if (!payload.net_weight) delete payload.net_weight;
+            payload.customer_id = payload.customer_id || null;
 
             if (isEdit) {
                 const { error } = await supabase
@@ -180,6 +204,29 @@ export default function CylinderFormModal({ cylinder, onClose, onSuccess }) {
                                         className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-teal-100 focus:border-teal-500 outline-none transition-all font-bold text-slate-700 cursor-pointer"
                                     >
                                         {MACHINE_TYPES.filter(t => t.id === 'BV' || t.id === 'TM').map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                                    </select>
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Khách hàng</label>
+                                    <select
+                                        name="customer_id"
+                                        value={formData.customer_id || ''}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-teal-100 focus:border-teal-500 outline-none transition-all font-bold text-slate-700 cursor-pointer"
+                                    >
+                                        <option value="">-- Trống (Thuộc kho) --</option>
+                                        {customersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                    </select>
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className="block text-xs font-bold text-slate-700 mb-1 uppercase tracking-wider">Kho *</label>
+                                    <select
+                                        name="warehouse_id"
+                                        value={formData.warehouse_id || 'HN'}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-teal-100 focus:border-teal-500 outline-none transition-all font-bold text-slate-700 cursor-pointer"
+                                    >
+                                        {WAREHOUSES.map(w => <option key={w.id} value={w.id}>{w.label}</option>)}
                                     </select>
                                 </div>
                             </div>
