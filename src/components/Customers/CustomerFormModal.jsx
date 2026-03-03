@@ -1,4 +1,4 @@
-import { Hash, MapPin, Phone, Save, User, X } from 'lucide-react';
+import { Building, Hash, MapPin, Phone, Receipt, Save, User, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../supabase/config';
 
@@ -35,7 +35,9 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
         warehouse_id: warehouses && warehouses.length > 0 ? warehouses[0].id : '',
         care_by: '',
         agency_name: '',
-        managed_by: ''
+        managed_by: '',
+        tax_code: '',
+        invoice_address: ''
     });
 
     useEffect(() => {
@@ -50,7 +52,9 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                 warehouse_id: customer.warehouse_id || (warehouses && warehouses.length > 0 ? warehouses[0].id : ''),
                 care_by: customer.care_by || '',
                 agency_name: customer.agency_name || '',
-                managed_by: customer.managed_by || ''
+                managed_by: customer.managed_by || '',
+                tax_code: customer.tax_code || '',
+                invoice_address: customer.invoice_address || ''
             });
         } else {
             // Auto generate CODE
@@ -310,6 +314,40 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                                         <option value="">-- Chọn NVKD phụ trách --</option>
                                         {staffList.map(u => <option key={u.id} value={u.name}>{u.name}{u.role ? ` (${u.role})` : ''}</option>)}
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 3: Thông tin xuất hoá đơn */}
+                        <div>
+                            <h4 className="flex items-center gap-2 text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">
+                                <Receipt className="w-4 h-4" /> THÔNG TIN XUẤT HOÁ ĐƠN
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Mã số thuế</label>
+                                    <div className="relative">
+                                        <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            name="tax_code"
+                                            value={formData.tax_code}
+                                            onChange={handleChange}
+                                            placeholder="VD: 0101234567"
+                                            className="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Địa chỉ xuất hoá đơn</label>
+                                    <input
+                                        type="text"
+                                        name="invoice_address"
+                                        value={formData.invoice_address}
+                                        onChange={handleChange}
+                                        placeholder="Địa chỉ ghi trên hoá đơn GTGT..."
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-gray-900"
+                                    />
                                 </div>
                             </div>
                         </div>
