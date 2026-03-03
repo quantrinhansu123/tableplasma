@@ -3,12 +3,15 @@ import {
     ChevronDown,
     Edit,
     Package,
+    Printer,
     Search,
     Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import ColumnToggle from '../components/ColumnToggle';
+import GoodsReceiptPrintTemplate from '../components/GoodsReceiptPrintTemplate';
 import { RECEIPT_STATUSES } from '../constants/goodsReceiptConstants';
 import { WAREHOUSES } from '../constants/orderConstants';
 import useColumnVisibility from '../hooks/useColumnVisibility';
@@ -32,6 +35,7 @@ const GoodsReceipts = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [warehouseFilter, setWarehouseFilter] = useState('ALL');
+    const [printData, setPrintData] = useState(null);
     const { visibleColumns, toggleColumn, isColumnVisible, resetColumns, visibleCount, totalCount } = useColumnVisibility('columns_goods_receipts', TABLE_COLUMNS);
     const visibleTableColumns = TABLE_COLUMNS.filter(col => isColumnVisible(col.key));
 
@@ -71,6 +75,25 @@ const GoodsReceipts = () => {
         } catch (error) {
             console.error('Error deleting receipt:', error);
             alert('❌ Lỗi khi xóa phiếu nhập: ' + error.message);
+        }
+    };
+
+    const handlePrintReceipt = async (receipt) => {
+        try {
+            const { data: items, error } = await supabase
+                .from('goods_receipt_items')
+                .select('*')
+                .eq('receipt_id', receipt.id);
+
+            if (error) throw error;
+
+            setPrintData({ receipt, items: items || [] });
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        } catch (error) {
+            console.error('Error fetching items for print:', error);
+            alert('❌ Lỗi khi tải dữ liệu in: ' + error.message);
         }
     };
 
@@ -338,6 +361,13 @@ const GoodsReceipts = () => {
                                                     </button>
                                                 )}
                                                 <button
+                                                    onClick={(e) => { e.stopPropagation(); handlePrintReceipt(receipt); }}
+                                                    className="text-slate-400 hover:text-blue-600 transition-all outline-none"
+                                                    title="In phiếu nhập"
+                                                >
+                                                    <Printer className="w-5 h-5 flex-shrink-0" />
+                                                </button>
+                                                <button
                                                     onClick={(e) => { e.stopPropagation(); navigate('/tao-phieu-nhap', { state: { receipt } }); }}
                                                     className="text-slate-400 hover:text-slate-900 transition-all outline-none"
                                                     title={receipt.status === 'CHO_DUYET' ? "Chỉnh sửa" : "Xem chi tiết"}
@@ -360,6 +390,14 @@ const GoodsReceipts = () => {
                     </div>
                 )}
             </div>
+
+            {/* Hidden Print Template — rendered via Portal directly under <body> to bypass #root hiding */}
+            {printData && createPortal(
+                <div className="print-only-content">
+                    <GoodsReceiptPrintTemplate receipt={printData?.receipt} items={printData?.items} />
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

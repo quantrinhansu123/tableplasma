@@ -16,6 +16,8 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
     const [isFetchingCustomers, setIsFetchingCustomers] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [customers, setCustomers] = useState(MOCK_CUSTOMERS);
+    const [showReasonModal, setShowReasonModal] = useState(false);
+    const [editReason, setEditReason] = useState('');
 
     const getNewOrderCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -132,15 +134,20 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
             return;
         }
 
+        if (isEdit && !editReason.trim()) {
+            setShowReasonModal(true);
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             const customerName = customers.find(c => c.id.toString() === formData.customerId.toString())?.name || '';
+            const currentUser = user?.name || user?.email || 'Hệ thống';
 
-            // Xac dinh trang thai va nguoi tao
             let initialStatus = 'CHO_DUYET';
             if (!isEdit && (role === 'admin' || role === 'thu_kho')) {
-                initialStatus = 'DA_DUYET'; // Admin, Thu Kho tao don -> Duyet luon (Thuan tien luong demo)
+                initialStatus = 'DA_DUYET';
             }
 
             const payload = {
@@ -158,21 +165,59 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
                 department: formData.department,
                 promotion_code: formData.promotion,
                 status: isEdit ? order.status : initialStatus,
-                ordered_by: isEdit ? order.ordered_by : (user?.name || user?.email || 'Hệ thống'),
+                ordered_by: isEdit ? order.ordered_by : currentUser,
                 updated_at: new Date().toISOString()
             };
 
             if (isEdit) {
+                const changedFields = {};
+                const fieldMap = {
+                    customer_name: order.customer_name,
+                    recipient_name: order.recipient_name,
+                    recipient_address: order.recipient_address,
+                    recipient_phone: order.recipient_phone,
+                    quantity: order.quantity,
+                    note: order.note,
+                    order_type: order.order_type,
+                    product_type: order.product_type,
+                    department: order.department,
+                    warehouse: order.warehouse
+                };
+                Object.entries(fieldMap).forEach(([key, oldVal]) => {
+                    const newVal = payload[key];
+                    if (String(oldVal || '') !== String(newVal || '')) {
+                        changedFields[key] = { old: oldVal || '', new: newVal || '' };
+                    }
+                });
+
                 const { error } = await supabase
                     .from('orders')
                     .update(payload)
                     .eq('id', order.id);
                 if (error) throw error;
+
+                await supabase.from('order_history').insert([{
+                    order_id: order.id,
+                    action: 'EDITED',
+                    changed_fields: Object.keys(changedFields).length > 0 ? changedFields : null,
+                    reason: editReason,
+                    created_by: currentUser
+                }]);
             } else {
-                const { error } = await supabase
+                const { data: inserted, error } = await supabase
                     .from('orders')
-                    .insert([payload]);
+                    .insert([payload])
+                    .select('id');
                 if (error) throw error;
+
+                if (inserted && inserted[0]) {
+                    await supabase.from('order_history').insert([{
+                        order_id: inserted[0].id,
+                        action: 'CREATED',
+                        new_status: initialStatus,
+                        created_by: currentUser
+                    }]);
+                }
             }
 
             onSuccess();
@@ -184,7 +229,7 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
         }
     };
 
-    return (
+    return (<>
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-20 z-[100] p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
 
@@ -419,5 +464,46 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
 
             </div>
         </div>
-    );
+
+        {/* Edit Reason Modal */}
+        {
+            showReasonModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                        <h3 className="text-lg font-black text-gray-900">📝 Lý do chỉnh sửa</h3>
+                        <p className="text-sm text-gray-500 font-medium">Vui lòng nhập lý do chỉnh sửa đơn hàng.</p>
+                        <textarea
+                            rows="3"
+                            value={editReason}
+                            onChange={(e) => setEditReason(e.target.value)}
+                            placeholder="Ví dụ: Khách yêu cầu thay đổi..."
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-medium text-sm resize-none"
+                            autoFocus
+                        />
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowReasonModal(false)}
+                                className="px-5 py-2.5 bg-gray-100 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!editReason.trim()) {
+                                        alert('Vui lòng nhập lý do!');
+                                        return;
+                                    }
+                                    setShowReasonModal(false);
+                                    document.getElementById('orderForm').requestSubmit();
+                                }}
+                                className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-colors"
+                            >
+                                Xác nhận & Lưu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+    </>);
 }

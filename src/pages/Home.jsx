@@ -9,6 +9,7 @@ import {
   Menu,
   MonitorIcon,
   Package,
+  PackageCheck,
   PackageMinus,
   PackagePlus,
   Plus,
@@ -81,6 +82,12 @@ const SIDEBAR_ITEMS = [
     label: "Xuất trả về NCC",
     icon: PackageMinus,
     path: "/xuat-kho",
+  },
+  {
+    id: "recovery",
+    label: "Thu hồi vỏ bình (KH)",
+    icon: PackageCheck,
+    path: "/thu-hoi-vo",
   },
   {
     id: "shippers",

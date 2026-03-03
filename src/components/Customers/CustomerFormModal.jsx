@@ -6,6 +6,24 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
     const isEdit = !!customer;
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [staffList, setStaffList] = useState([]);
+    const [agencySuggestions, setAgencySuggestions] = useState([]);
+
+    useEffect(() => {
+        const loadStaff = async () => {
+            const { data } = await supabase.from('app_users').select('id, name, role').order('name');
+            if (data) setStaffList(data);
+        };
+        const loadAgencies = async () => {
+            const { data } = await supabase.from('customers').select('agency_name').not('agency_name', 'is', null).neq('agency_name', '');
+            if (data) {
+                const unique = [...new Set(data.map(d => d.agency_name).filter(Boolean))];
+                setAgencySuggestions(unique);
+            }
+        };
+        loadStaff();
+        loadAgencies();
+    }, []);
 
     const [formData, setFormData] = useState({
         code: '',
@@ -15,7 +33,9 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
         address: '',
         legal_rep: '',
         warehouse_id: warehouses && warehouses.length > 0 ? warehouses[0].id : '',
-        care_by: ''
+        care_by: '',
+        agency_name: '',
+        managed_by: ''
     });
 
     useEffect(() => {
@@ -28,7 +48,9 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                 address: customer.address || '',
                 legal_rep: customer.legal_rep || '',
                 warehouse_id: customer.warehouse_id || (warehouses && warehouses.length > 0 ? warehouses[0].id : ''),
-                care_by: customer.care_by || ''
+                care_by: customer.care_by || '',
+                agency_name: customer.agency_name || '',
+                managed_by: customer.managed_by || ''
             });
         } else {
             // Auto generate CODE
@@ -252,14 +274,42 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">NV Kinh Doanh phụ trách chăm sóc</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="care_by"
                                         value={formData.care_by}
                                         onChange={handleChange}
-                                        placeholder="Quản lý bằng Tên NV hoặc Mã..."
-                                        className="w-full px-4 py-3 bg-orange-50/50 border border-orange-100 rounded-xl focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-bold text-orange-900"
+                                        className="w-full px-4 py-3 bg-orange-50/50 border border-orange-100 rounded-xl focus:ring-4 focus:ring-orange-100 focus:border-orange-500 outline-none transition-all font-bold text-orange-900 cursor-pointer"
+                                    >
+                                        <option value="">-- Chọn NVKD --</option>
+                                        {staffList.map(u => <option key={u.id} value={u.name}>{u.name}{u.role ? ` (${u.role})` : ''}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Đại lý (nơi quản lý KH)</label>
+                                    <input
+                                        type="text"
+                                        name="agency_name"
+                                        value={formData.agency_name}
+                                        onChange={handleChange}
+                                        placeholder="Gõ tên đại lý..."
+                                        list="modal-agency-suggestions"
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-gray-900"
                                     />
+                                    <datalist id="modal-agency-suggestions">
+                                        {agencySuggestions.map((a, i) => <option key={i} value={a} />)}
+                                    </datalist>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Đại lý phụ trách (NVKD)</label>
+                                    <select
+                                        name="managed_by"
+                                        value={formData.managed_by}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-gray-900 cursor-pointer"
+                                    >
+                                        <option value="">-- Chọn NVKD phụ trách --</option>
+                                        {staffList.map(u => <option key={u.id} value={u.name}>{u.name}{u.role ? ` (${u.role})` : ''}</option>)}
+                                    </select>
                                 </div>
                             </div>
                         </div>

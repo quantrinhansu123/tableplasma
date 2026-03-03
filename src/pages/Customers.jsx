@@ -1,16 +1,15 @@
 import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
     ArcElement,
-    PointElement,
-    LineElement,
-    Title,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend as ChartLegend,
     Tooltip as ChartTooltip,
-    Legend as ChartLegend
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title
 } from 'chart.js';
-import { Bar as BarChartJS, Pie as PieChartJS, Line as LineChartJS } from 'react-chartjs-2';
 import {
     ChevronDown,
     Edit,
@@ -22,8 +21,8 @@ import {
     Users
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Bar as BarChartJS, Pie as PieChartJS } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import ColumnToggle from '../components/ColumnToggle';
 import CustomerDetailsModal from '../components/Customers/CustomerDetailsModal';
 import CustomerFormModal from '../components/Customers/CustomerFormModal';
 import { WAREHOUSES } from '../constants/orderConstants';
@@ -54,7 +53,7 @@ const Customers = () => {
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
-    
+
     // Filter states
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [selectedManagedBy, setSelectedManagedBy] = useState([]);
@@ -70,7 +69,7 @@ const Customers = () => {
         { key: 'legal_rep', label: 'Người đại diện pháp luật' },
         { key: 'managed_by', label: 'Nhân viên phụ trách' },
         { key: 'category', label: 'Loại khách hàng' },
-        { key: 'current_cylinders', label: 'Số bình hiện có' },
+        { key: 'current_cylinders', label: 'Số vỏ' },
         { key: 'current_machines', label: 'Số máy hiện có' },
         { key: 'borrowed_cylinders', label: 'Vỏ bình đang mượn' },
         { key: 'machines_in_use', label: 'Mã máy đang sử dụng' },
@@ -136,15 +135,15 @@ const Customers = () => {
         );
 
         // Filter by category
-        const matchesCategory = selectedCategories.length === 0 || 
+        const matchesCategory = selectedCategories.length === 0 ||
             selectedCategories.includes(c.category);
-        
+
         // Filter by managed_by
-        const matchesManagedBy = selectedManagedBy.length === 0 || 
+        const matchesManagedBy = selectedManagedBy.length === 0 ||
             selectedManagedBy.includes(c.managed_by);
-        
+
         // Filter by care_by
-        const matchesCareBy = selectedCareBy.length === 0 || 
+        const matchesCareBy = selectedCareBy.length === 0 ||
             selectedCareBy.includes(c.care_by);
 
         return matchesSearch && matchesCategory && matchesManagedBy && matchesCareBy;
@@ -212,8 +211,8 @@ const Customers = () => {
                 </button>
                 {isOpen && (
                     <>
-                        <div 
-                            className="fixed inset-0 z-10" 
+                        <div
+                            className="fixed inset-0 z-10"
                             onClick={() => setIsOpen(false)}
                         ></div>
                         <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] shadow-lg z-20 min-w-[250px] max-h-80">
@@ -318,22 +317,20 @@ const Customers = () => {
             <div className="flex items-center gap-1 mb-8 border-b border-[#E5E7EB]">
                 <button
                     onClick={() => setActiveView('list')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'list' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'list'
+                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
                             : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                        }`}
                     style={activeView === 'list' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Danh sách
                 </button>
                 <button
                     onClick={() => setActiveView('stats')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'stats' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'stats'
+                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
                             : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                        }`}
                     style={activeView === 'stats' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Thống kê

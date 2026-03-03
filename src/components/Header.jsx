@@ -1,4 +1,4 @@
-import { Home as HomeIcon, Layout, LogOut, PackageMinus, PackagePlus } from "lucide-react";
+import { Home as HomeIcon, Layout, LogOut } from "lucide-react";
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -37,20 +37,6 @@ export default function Header() {
 
                     {/* Navigation */}
                     <div className="flex items-center gap-6">
-                        <div className="hidden lg:flex items-center gap-2 mr-4">
-                            <Link
-                                to="/nhap-hang"
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isActive('/nhap-hang') ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'}`}
-                            >
-                                <PackagePlus className="w-4 h-4" /> <span className="hidden xl:inline">Nhập hàng</span>
-                            </Link>
-                            <Link
-                                to="/xuat-kho"
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${isActive('/xuat-kho') ? 'bg-rose-50 text-rose-600' : 'text-slate-500 hover:bg-slate-50 hover:text-rose-600'}`}
-                            >
-                                <PackageMinus className="w-4 h-4" /> <span className="hidden xl:inline">Xuất trả NCC</span>
-                            </Link>
-                        </div>
                         <Link
                             to="/trang-chu"
                             className="flex items-center gap-2 text-slate-500 hover:text-blue-600 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:bg-blue-50/50 group"
