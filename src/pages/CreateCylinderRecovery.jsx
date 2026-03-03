@@ -37,6 +37,8 @@ const CreateCylinderRecovery = () => {
     });
 
     const [items, setItems] = useState([]);
+    const itemsRef = useRef(items);
+    useEffect(() => { itemsRef.current = items; }, [items]);
 
     useEffect(() => {
         loadCustomers();
@@ -82,34 +84,65 @@ const CreateCylinderRecovery = () => {
         }
     };
 
-    // Barcode scanner
+    // Barcode scanner optimized for 1D barcodes (mã vạch)
     const startScanner = useCallback(async () => {
+        // Ensure previous scanner is fully stopped
+        if (html5QrCodeRef.current) {
+            try { await html5QrCodeRef.current.stop(); } catch { }
+            html5QrCodeRef.current = null;
+        }
+
         setIsScannerOpen(true);
-        const { Html5Qrcode } = await import('html5-qrcode');
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode');
+
+        // Only 1D barcode formats for faster/more accurate detection
+        const formatsToSupport = [
+            Html5QrcodeSupportedFormats.CODE_128,
+            Html5QrcodeSupportedFormats.CODE_39,
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.ITF,
+            Html5QrcodeSupportedFormats.CODE_93,
+            Html5QrcodeSupportedFormats.CODABAR,
+            Html5QrcodeSupportedFormats.QR_CODE,
+        ];
+
         setTimeout(async () => {
             try {
-                const qr = new Html5Qrcode("recovery-barcode-reader");
+                const qr = new Html5Qrcode("recovery-barcode-reader", {
+                    formatsToSupport,
+                    verbose: false,
+                });
                 html5QrCodeRef.current = qr;
                 await qr.start(
                     { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 280, height: 120 }, aspectRatio: 1.5 },
+                    {
+                        fps: 10,
+                        // Wide & short box optimized for horizontal 1D barcodes
+                        qrbox: (viewfinderWidth, viewfinderHeight) => ({
+                            width: Math.floor(viewfinderWidth * 0.85),
+                            height: Math.floor(viewfinderHeight * 0.35)
+                        }),
+                        disableFlip: false,
+                    },
                     (decodedText) => {
-                        // Check if already scanned
-                        if (items.some(i => i.serial_number === decodedText)) {
-                            alert(`⚠️ Vỏ "${decodedText}" đã có trong danh sách!`);
+                        const currentItems = itemsRef.current;
+                        if (currentItems.some(i => i.serial_number === decodedText)) {
                             return;
                         }
                         setItems(prev => [...prev, { _id: Date.now(), serial_number: decodedText, condition: 'tot', note: '' }]);
-                        // Don't stop scanner - keep scanning
                     },
                     () => { }
                 );
             } catch (err) {
+                console.error('Scanner error:', err);
                 alert('❌ Không mở được camera: ' + err);
                 setIsScannerOpen(false);
             }
-        }, 100);
-    }, [items]);
+        }, 300);
+    }, []);
 
     const stopScanner = useCallback(async () => {
         if (html5QrCodeRef.current) {
