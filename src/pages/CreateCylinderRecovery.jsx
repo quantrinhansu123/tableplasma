@@ -388,7 +388,7 @@ const CreateCylinderRecovery = () => {
                             <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1 flex items-center gap-1"><Link2 className="w-3 h-3" /> Đơn hàng liên kết</label>
                             <select value={formData.order_id} onChange={(e) => setFormData({ ...formData, order_id: e.target.value })} className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl font-bold text-gray-900 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all outline-none cursor-pointer">
                                 <option value="">-- Không liên kết --</option>
-                                {customerOrders.map(o => <option key={o.id} value={o.id}>ĐH {o.order_code} — {o.quantity} {o.product_type === 'BINH' ? 'bình' : 'máy'} ({o.status})</option>)}
+                                {customerOrders.map(o => <option key={o.id} value={o.id}>ĐH {o.order_code} — {o.quantity} {o.product_type?.startsWith('BINH') ? 'bình' : 'máy'} ({o.status})</option>)}
                             </select>
                             {formData.order_id && (() => {
                                 const selectedOrder = customerOrders.find(o => o.id === formData.order_id);

@@ -44,7 +44,7 @@ const CreateOrder = () => {
         recipientAddress: '',
         recipientPhone: '',
         orderType: 'THUONG',
-        productType: 'BINH',
+        productType: 'BINH_4L',
         quantity: 0,
         unitPrice: 0,
         department: '',
@@ -126,7 +126,7 @@ const CreateOrder = () => {
         setFormData({ ...formData, quantity: parsedValue });
 
         // Only auto-resize for BINH product type
-        if (formData.productType === 'BINH') {
+        if (formData.productType.startsWith('BINH')) {
             setAssignedCylinders(prev => {
                 const newArr = [...prev];
                 if (parsedValue > newArr.length) {
@@ -330,7 +330,7 @@ const CreateOrder = () => {
                 promotion_code: formData.promotion,
                 shipper_id: formData.shipperId || null,
                 shipping_fee: formData.shippingFee || 0,
-                assigned_cylinders: formData.productType === 'BINH' ? assignedCylinders.filter(Boolean) : null,
+                assigned_cylinders: formData.productType.startsWith('BINH') ? assignedCylinders.filter(Boolean) : null,
                 status: editOrder ? editOrder.status : initialStatus,
                 ordered_by: editOrder ? editOrder.ordered_by : currentUser
             };
@@ -580,7 +580,7 @@ const CreateOrder = () => {
                                 </div>
 
                                 {/* Dynamic Cylinder Serial Assignment */}
-                                {formData.productType === 'BINH' && formData.quantity > 0 && (
+                                {formData.productType.startsWith('BINH') && formData.quantity > 0 && (
                                     <div className="mt-6 p-5 bg-[#EFF6FF] border border-[#BFDBFE] space-y-4">
                                         <div className="flex items-center justify-between">
                                             <h4 className="text-xs font-medium text-[#2563EB] uppercase tracking-wide flex items-center gap-2" style={{ fontFamily: '"Roboto", sans-serif' }}>

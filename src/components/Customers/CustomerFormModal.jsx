@@ -36,7 +36,10 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
         care_by: '',
         agency_name: '',
         managed_by: '',
+        contact_info: '',
+        business_group: '',
         tax_code: '',
+        invoice_company_name: '',
         invoice_address: ''
     });
 
@@ -53,7 +56,10 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                 care_by: customer.care_by || '',
                 agency_name: customer.agency_name || '',
                 managed_by: customer.managed_by || '',
+                contact_info: customer.contact_info || '',
+                business_group: customer.business_group || '',
                 tax_code: customer.tax_code || '',
+                invoice_company_name: customer.invoice_company_name || '',
                 invoice_address: customer.invoice_address || ''
             });
         } else {
@@ -226,6 +232,17 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                                         required
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Thông tin người liên hệ phụ</label>
+                                    <input
+                                        type="text"
+                                        name="contact_info"
+                                        value={formData.contact_info}
+                                        onChange={handleChange}
+                                        placeholder="Tên, chức vụ người liên hệ phụ..."
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-gray-900"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -277,6 +294,17 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Nhóm Kinh Doanh</label>
+                                    <input
+                                        type="text"
+                                        name="business_group"
+                                        value={formData.business_group}
+                                        onChange={handleChange}
+                                        placeholder="Ví dụ: Nhóm KD Miền Bắc..."
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-medium text-gray-900"
+                                    />
+                                </div>
+                                <div>
                                     <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">NV Kinh Doanh phụ trách chăm sóc</label>
                                     <select
                                         name="care_by"
@@ -323,7 +351,7 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                             <h4 className="flex items-center gap-2 text-sm font-black text-gray-800 uppercase tracking-widest mb-4 border-b border-gray-100 pb-2">
                                 <Receipt className="w-4 h-4" /> THÔNG TIN XUẤT HOÁ ĐƠN
                             </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Mã số thuế</label>
                                     <div className="relative">
@@ -337,6 +365,17 @@ export default function CustomerFormModal({ customer, onClose, onSuccess, catego
                                             className="w-full pl-9 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
                                         />
                                     </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Tên công ty (trên hoá đơn)</label>
+                                    <input
+                                        type="text"
+                                        name="invoice_company_name"
+                                        value={formData.invoice_company_name}
+                                        onChange={handleChange}
+                                        placeholder="Tên công ty ghi trên hoá đơn..."
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all font-bold text-gray-900"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Địa chỉ xuất hoá đơn</label>

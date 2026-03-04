@@ -3,6 +3,7 @@ import {
     ChevronDown,
     Edit,
     Package,
+    Plus,
     Printer,
     Search,
     Trash2
@@ -242,6 +243,15 @@ const GoodsReceipts = () => {
                     </h1>
                 </div>
 
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/tao-phieu-nhap')}
+                        className="flex items-center gap-2 px-6 py-3.5 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-200"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Tạo phiếu nhập mới
+                    </button>
+                </div>
             </div>
 
             {/* Stats Cards */}

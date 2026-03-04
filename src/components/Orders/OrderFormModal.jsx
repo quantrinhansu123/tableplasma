@@ -31,7 +31,7 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
         recipientPhone: '',
         orderType: 'THUONG',
         note: '',
-        productType: 'BINH',
+        productType: 'BINH_4L',
         quantity: 0,
         department: '',
         promotion: ''

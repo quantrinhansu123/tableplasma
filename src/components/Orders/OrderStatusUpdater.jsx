@@ -1,6 +1,6 @@
 import { AlertCircle, AlertTriangle, CheckCircle, Clock, Plus, Truck, UploadCloud } from 'lucide-react';
 import { useState } from 'react';
-import { ORDER_STATE_TRANSITIONS } from '../../constants/orderConstants';
+import { ORDER_STATE_TRANSITIONS, PRODUCT_TYPES } from '../../constants/orderConstants';
 import { supabase } from '../../supabase/config';
 import OrderHistoryTimeline from './OrderHistoryTimeline';
 
@@ -31,7 +31,7 @@ export default function OrderStatusUpdater({ order, userRole, onClose, onUpdateS
             let imageUrl = order.delivery_image_url;
 
             // Extra checks based on transitions
-            if (transition.nextStatus === 'DA_DUYET' && order.status === 'KHO_XU_LY' && order.product_type === 'BINH') {
+            if (transition.nextStatus === 'DA_DUYET' && order.status === 'KHO_XU_LY' && order.product_type?.startsWith('BINH')) {
                 const serials = scannedSerials.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
                 if (serials.length !== order.quantity) {
                     throw new Error(`Bạn cần quét đúng ${order.quantity} mã bình. Hiện tại đã quét: ${serials.length}`);
@@ -95,7 +95,7 @@ export default function OrderStatusUpdater({ order, userRole, onClose, onUpdateS
             };
 
             // Nếu đây là lúc xuất kho (Gán mã bình)
-            if (transition.nextStatus === 'DA_DUYET' && order.status === 'KHO_XU_LY' && order.product_type === 'BINH') {
+            if (transition.nextStatus === 'DA_DUYET' && order.status === 'KHO_XU_LY' && order.product_type?.startsWith('BINH')) {
                 updatePayload.assigned_cylinders = scannedSerials.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
             }
 
@@ -146,6 +146,19 @@ export default function OrderStatusUpdater({ order, userRole, onClose, onUpdateS
                 </div>
 
                 <div className="p-6 space-y-4 overflow-y-auto">
+                    {/* Order Summary */}
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100 space-y-2 text-sm">
+                        <div className="flex justify-between"><span className="text-gray-500 font-medium">Khách hàng:</span><span className="font-bold text-gray-900">{order.customer_name || '—'}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500 font-medium">Hàng hóa:</span><span className="font-bold text-gray-900">{PRODUCT_TYPES.find(p => p.id === order.product_type)?.label || order.product_type || '—'}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-500 font-medium">Số lượng:</span><span className="font-bold text-gray-900">{order.quantity || 0}</span></div>
+                        {order.department && (
+                            <div className="flex justify-between"><span className="text-gray-500 font-medium">Mã máy:</span><span className="font-bold text-blue-700">{order.department}</span></div>
+                        )}
+                        {order.warehouse && (
+                            <div className="flex justify-between"><span className="text-gray-500 font-medium">Kho xuất:</span><span className="font-bold text-gray-900">{order.warehouse}</span></div>
+                        )}
+                    </div>
+
                     {/* Tabs */}
                     <div className="flex gap-2 border-b border-gray-100 pb-3">
                         <button
@@ -168,7 +181,7 @@ export default function OrderStatusUpdater({ order, userRole, onClose, onUpdateS
 
                     {activeTab === 'actions' && (<>
                         {/* RFID Scanner for Warehouse */}
-                        {(order.status === 'KHO_XU_LY') && order.product_type === 'BINH' && (
+                        {(order.status === 'KHO_XU_LY') && order.product_type?.startsWith('BINH') && (
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">
                                     Quét mã vỏ bình RFID (Phải đúng <span className="text-blue-600">{order.quantity}</span> vỏ bình)

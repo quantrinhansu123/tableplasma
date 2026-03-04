@@ -1,33 +1,32 @@
 import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
     ArcElement,
-    PointElement,
-    LineElement,
-    Title,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend as ChartLegend,
     Tooltip as ChartTooltip,
-    Legend as ChartLegend
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title
 } from 'chart.js';
-import { Bar as BarChartJS, Pie as PieChartJS, Line as LineChartJS } from 'react-chartjs-2';
 import {
     Activity,
     ChevronDown,
     Edit,
     Eye,
     Filter,
-    MonitorIcon,
     Plus,
     Search,
     Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Bar as BarChartJS, Pie as PieChartJS } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import ColumnToggle from '../components/ColumnToggle';
 import MachineDetailsModal from '../components/Machines/MachineDetailsModal';
 import MachineFormModal from '../components/Machines/MachineFormModal';
 import { MACHINE_STATUSES, MACHINE_TYPES } from '../constants/machineConstants';
+import { WAREHOUSES } from '../constants/orderConstants';
 import useColumnVisibility from '../hooks/useColumnVisibility';
 import usePermissions from '../hooks/usePermissions';
 import { supabase } from '../supabase/config';
@@ -49,6 +48,7 @@ ChartJS.register(
 const TABLE_COLUMNS = [
     { key: 'serial_number', label: 'Mã Máy (Serial)' },
     { key: 'machine_type', label: 'Loại Máy' },
+    { key: 'warehouse', label: 'Kho Quản Lý' },
     { key: 'customer_name', label: 'Tên Khách Hàng' },
     { key: 'status', label: 'Trạng Thái' },
     { key: 'department_in_charge', label: 'Bộ Phận Phụ Trách' },
@@ -68,12 +68,13 @@ const Machines = () => {
     const [selectedMachine, setSelectedMachine] = useState(null);
     const { visibleColumns, toggleColumn, isColumnVisible, resetColumns, visibleCount, totalCount } = useColumnVisibility('columns_machines', TABLE_COLUMNS);
     const visibleTableColumns = TABLE_COLUMNS.filter(col => isColumnVisible(col.key));
-    
+
     // Filter states
     const [selectedStatuses, setSelectedStatuses] = useState([]);
     const [selectedMachineTypes, setSelectedMachineTypes] = useState([]);
     const [selectedCustomers, setSelectedCustomers] = useState([]);
     const [selectedDepartments, setSelectedDepartments] = useState([]);
+    const [selectedWarehouses, setSelectedWarehouses] = useState([]);
     const [uniqueCustomers, setUniqueCustomers] = useState([]);
     const [uniqueDepartments, setUniqueDepartments] = useState([]);
 
@@ -169,8 +170,8 @@ const Machines = () => {
                 </button>
                 {isOpen && (
                     <>
-                        <div 
-                            className="fixed inset-0 z-10" 
+                        <div
+                            className="fixed inset-0 z-10"
                             onClick={() => setIsOpen(false)}
                         ></div>
                         <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] shadow-lg z-20 min-w-[250px] max-h-80">
@@ -280,28 +281,33 @@ const Machines = () => {
         const matchesSearch = (
             (m.serial_number?.toLowerCase().includes(search)) ||
             (m.machine_type?.toLowerCase().includes(search)) ||
+            (m.warehouse?.toLowerCase().includes(search)) ||
             (m.customer_name?.toLowerCase().includes(search)) ||
             (m.department_in_charge?.toLowerCase().includes(search))
         );
 
         // Filter by status
-        const matchesStatus = selectedStatuses.length === 0 || 
+        const matchesStatus = selectedStatuses.length === 0 ||
             selectedStatuses.includes(m.status);
-        
+
         // Filter by machine type
-        const matchesMachineType = selectedMachineTypes.length === 0 || 
+        const matchesMachineType = selectedMachineTypes.length === 0 ||
             selectedMachineTypes.includes(m.machine_type);
-        
+
         // Filter by customer
-        const matchesCustomer = selectedCustomers.length === 0 || 
+        const matchesCustomer = selectedCustomers.length === 0 ||
             selectedCustomers.includes(m.customer_name);
-        
+
         // Filter by department
-        const matchesDepartment = selectedDepartments.length === 0 || 
+        const matchesDepartment = selectedDepartments.length === 0 ||
             selectedDepartments.includes(m.department_in_charge);
 
-        return matchesSearch && matchesStatus && matchesMachineType && 
-               matchesCustomer && matchesDepartment;
+        // Filter by warehouse
+        const matchesWarehouse = selectedWarehouses.length === 0 ||
+            selectedWarehouses.includes(m.warehouse);
+
+        return matchesSearch && matchesStatus && matchesMachineType &&
+            matchesCustomer && matchesDepartment && matchesWarehouse;
     });
 
     // Calculate totals
@@ -316,22 +322,20 @@ const Machines = () => {
             <div className="flex items-center gap-1 mb-8 border-b border-[#E5E7EB]">
                 <button
                     onClick={() => setActiveView('list')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'list' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'list'
+                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
                             : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                        }`}
                     style={activeView === 'list' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Danh sách
                 </button>
                 <button
                     onClick={() => setActiveView('stats')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'stats' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'stats'
+                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
                             : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                        }`}
                     style={activeView === 'stats' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Thống kê
@@ -526,6 +530,40 @@ const Machines = () => {
                                 ))}
                             </div>
                         </FilterDropdown>
+
+                        {/* Kho quản lý Dropdown */}
+                        <FilterDropdown
+                            label="Kho quản lý"
+                            selectedCount={selectedWarehouses.length}
+                            totalCount={WAREHOUSES.length}
+                            onSelectAll={() => {
+                                if (selectedWarehouses.length === WAREHOUSES.length) {
+                                    setSelectedWarehouses([]);
+                                } else {
+                                    setSelectedWarehouses(WAREHOUSES.map(w => w.id));
+                                }
+                            }}
+                        >
+                            <div className="space-y-1 p-2">
+                                {WAREHOUSES.map(wh => (
+                                    <label key={wh.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#F3F4F6] p-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedWarehouses.includes(wh.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedWarehouses([...selectedWarehouses, wh.id]);
+                                                } else {
+                                                    setSelectedWarehouses(selectedWarehouses.filter(id => id !== wh.id));
+                                                }
+                                            }}
+                                            className="w-4 h-4 text-[#2563EB] border-[#D1D5DB] focus:ring-[#2563EB]"
+                                        />
+                                        <span className="text-sm text-[#374151]" style={{ fontFamily: '"Roboto", sans-serif' }}>{wh.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </FilterDropdown>
                     </div>
 
                     {/* Main Content Card */}
@@ -570,13 +608,14 @@ const Machines = () => {
                                                 </span>
                                             </td>}
                                             {isColumnVisible('machine_type') && <td className="px-4 py-4 text-sm text-[#374151] font-normal" style={{ fontFamily: '"Roboto", sans-serif' }}>{getLabel(MACHINE_TYPES, m.machine_type)}</td>}
+                                            {isColumnVisible('warehouse') && <td className="px-4 py-4 text-sm text-[#374151] font-normal" style={{ fontFamily: '"Roboto", sans-serif' }}>{getLabel(WAREHOUSES, m.warehouse) || '—'}</td>}
                                             {isColumnVisible('customer_name') && <td className="px-4 py-4">
                                                 <span className="text-sm font-medium text-[#111827]" style={{ fontFamily: '"Roboto", sans-serif' }}>
                                                     {m.customer_name || 'Sẵn sàng xuất kho'}
                                                 </span>
                                             </td>}
                                             {isColumnVisible('status') && <td className="px-4 py-4">
-                                                <span 
+                                                <span
                                                     className="inline-flex items-center px-3 py-1.5 text-xs font-medium border"
                                                     style={(() => {
                                                         const colorMap = {

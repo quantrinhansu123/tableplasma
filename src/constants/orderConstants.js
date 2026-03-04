@@ -28,8 +28,9 @@ export const CUSTOMER_CATEGORIES = [
 ];
 
 export const PRODUCT_TYPES = [
+    { id: 'BINH_4L', label: 'Bình 4L' },
+    { id: 'BINH_8L', label: 'Bình 8L' },
     { id: 'MAY', label: 'Máy' },
-    { id: 'BINH', label: 'Bình' },
 ];
 
 export const ORDER_STATUSES = [
