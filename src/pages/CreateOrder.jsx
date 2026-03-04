@@ -1,7 +1,9 @@
 import {
+    ChevronDown,
     Package,
     Plus,
     ScanLine,
+    Search,
     X
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,6 +25,22 @@ const CreateOrder = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [customersList, setCustomersList] = useState([]);
     const [shippersList, setShippersList] = useState([]);
+
+    // Custom dropdown states
+    const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+    const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+    const customerDropdownRef = useRef(null);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (customerDropdownRef.current && !customerDropdownRef.current.contains(event.target)) {
+                setIsCustomerDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [editReason, setEditReason] = useState('');
     const [assignedCylinders, setAssignedCylinders] = useState([]);
@@ -159,20 +177,24 @@ const CreateOrder = () => {
 
     const calculatedTotalAmount = (formData.quantity || 0) * (formData.unitPrice || 0);
 
-    const handleCustomerChange = (e) => {
-        const cId = e.target.value;
-        const customer = customersList.find(c => c.id === cId);
-        if (customer) {
-            setFormData({
-                ...formData,
-                customerId: customer.id,
-                recipientName: customer.representative_name || customer.name || '',
-                recipientAddress: customer.shipping_address || customer.address || '',
-                recipientPhone: customer.phone || '',
-                customerCategory: customer.category || 'TM'
-            });
-        }
+    const handleCustomerSelect = (customer) => {
+        setFormData({
+            ...formData,
+            customerId: customer.id,
+            recipientName: customer.representative_name || customer.name || '',
+            recipientAddress: customer.shipping_address || customer.address || '',
+            recipientPhone: customer.phone || '',
+            customerCategory: customer.category || 'TM'
+        });
+        setIsCustomerDropdownOpen(false);
+        setCustomerSearchTerm('');
     };
+
+    const filteredCustomers = customersList.filter(c =>
+        c.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+        (c.phone && c.phone.includes(customerSearchTerm)) ||
+        (c.representative_name && c.representative_name.toLowerCase().includes(customerSearchTerm.toLowerCase()))
+    );
 
     // Initialize assignedCylinders when editing
     useEffect(() => {
@@ -455,19 +477,62 @@ const CreateOrder = () => {
 
                         {/* Section 2: Thông tin khách hàng & Người nhận */}
                         <div className="p-6 md:p-8 bg-[#EFF6FF] border border-[#BFDBFE] space-y-6 md:space-y-8">
-                            <div className="space-y-2">
+                            <div className="space-y-2 relative" ref={customerDropdownRef}>
                                 <label className="text-xs font-medium text-[#2563EB] uppercase tracking-wide flex items-center gap-2" style={{ fontFamily: '"Roboto", sans-serif' }}>
                                     <Package className="w-4 h-4" /> 4. Chọn Khách hàng *
                                 </label>
-                                <select
-                                    value={formData.customerId}
-                                    onChange={handleCustomerChange}
-                                    className="w-full px-4 py-3 bg-white border border-[#93C5FD] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all cursor-pointer"
-                                    style={{ fontFamily: '"Roboto", sans-serif' }}
+
+                                {/* Custom Select Trigger */}
+                                <div
+                                    className="w-full px-4 py-3 bg-white border border-[#93C5FD] outline-none hover:border-[#2563EB] font-medium text-sm transition-all cursor-pointer flex justify-between items-center"
+                                    onClick={() => setIsCustomerDropdownOpen(!isCustomerDropdownOpen)}
                                 >
-                                    <option value="">-- Chọn khách hàng trong hệ thống --</option>
-                                    {customersList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
+                                    <span className={formData.customerId ? "text-[#111827]" : "text-gray-500"}>
+                                        {formData.customerId
+                                            ? customersList.find(c => c.id === formData.customerId)?.name
+                                            : '-- Chọn khách hàng trong hệ thống --'}
+                                    </span>
+                                    <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isCustomerDropdownOpen ? 'rotate-180' : ''}`} />
+                                </div>
+
+                                {/* Custom Dropdown Menu */}
+                                {isCustomerDropdownOpen && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-xl max-h-60 overflow-hidden flex flex-col">
+                                        <div className="p-2 border-b border-gray-100 flex items-center gap-2 bg-gray-50 sticky top-0">
+                                            <Search className="w-4 h-4 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                className="w-full bg-transparent border-none outline-none text-sm placeholder-gray-400"
+                                                placeholder="Tìm tên KH, người đại diện hoặc SĐT..."
+                                                value={customerSearchTerm}
+                                                onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <div className="overflow-y-auto custom-scrollbar flex-1">
+                                            {filteredCustomers.length > 0 ? (
+                                                filteredCustomers.map(customer => (
+                                                    <div
+                                                        key={customer.id}
+                                                        className="px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-none transition-colors"
+                                                        onClick={() => handleCustomerSelect(customer)}
+                                                    >
+                                                        <div className="font-medium text-sm text-gray-900">{customer.name}</div>
+                                                        <div className="text-xs text-gray-500 flex gap-2 mt-0.5">
+                                                            {customer.representative_name && <span>👤 {customer.representative_name}</span>}
+                                                            {customer.phone && <span>📞 {customer.phone}</span>}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-4 text-sm text-center text-gray-500 italic">
+                                                    Không tìm thấy khách hàng nào khớp.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-6 md:gap-8">
@@ -630,16 +695,18 @@ const CreateOrder = () => {
                                     </div>
                                 )}
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>12. Khoa sử dụng máy / Mã máy</label>
-                                    <input
-                                        value={formData.department}
-                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                        placeholder="Ví dụ: Mã máy đang sử dụng"
-                                        className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
-                                        style={{ fontFamily: '"Roboto", sans-serif' }}
-                                    />
-                                </div>
+                                {formData.productType.startsWith('MAY') && (
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>12. Khoa sử dụng máy / Mã máy</label>
+                                        <input
+                                            value={formData.department}
+                                            onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                            placeholder="Ví dụ: Máy PlasmaRosy PR-01"
+                                            className="w-full px-4 py-3 bg-white border border-[#D1D5DB] outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] font-medium text-sm transition-all"
+                                            style={{ fontFamily: '"Roboto", sans-serif' }}
+                                        />
+                                    </div>
+                                )}
                                 <div className="space-y-2">
                                     <label className="text-xs font-medium text-[#374151] uppercase tracking-wide" style={{ fontFamily: '"Roboto", sans-serif' }}>13. Khuyến mãi (Áp dụng mã)</label>
                                     <select

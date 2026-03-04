@@ -1,16 +1,15 @@
 import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
     ArcElement,
-    PointElement,
-    LineElement,
-    Title,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend as ChartLegend,
     Tooltip as ChartTooltip,
-    Legend as ChartLegend
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title
 } from 'chart.js';
-import { Bar as BarChartJS, Pie as PieChartJS, Line as LineChartJS } from 'react-chartjs-2';
 import {
     ActivitySquare,
     ChevronDown,
@@ -22,11 +21,12 @@ import {
     Trash2
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Bar as BarChartJS, Pie as PieChartJS } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import ColumnToggle from '../components/ColumnToggle';
 import CylinderDetailsModal from '../components/Cylinders/CylinderDetailsModal';
 import CylinderFormModal from '../components/Cylinders/CylinderFormModal';
-import { CYLINDER_STATUSES, CYLINDER_VOLUMES } from '../constants/machineConstants';
+import CylinderQCDialog from '../components/Cylinders/CylinderQCDialog';
+import { CYLINDER_STATUSES } from '../constants/machineConstants';
 import useColumnVisibility from '../hooks/useColumnVisibility';
 import usePermissions from '../hooks/usePermissions';
 import { supabase } from '../supabase/config';
@@ -59,11 +59,12 @@ const Cylinders = () => {
     const [cylinders, setCylinders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [isQCModalOpen, setIsQCModalOpen] = useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedCylinder, setSelectedCylinder] = useState(null);
     const { visibleColumns, toggleColumn, isColumnVisible, resetColumns, visibleCount, totalCount } = useColumnVisibility('columns_cylinders', TABLE_COLUMNS);
     const visibleTableColumns = TABLE_COLUMNS.filter(col => isColumnVisible(col.key));
-    
+
     // Filter states
     const [selectedStatuses, setSelectedStatuses] = useState([]);
     const [selectedVolumes, setSelectedVolumes] = useState([]);
@@ -164,8 +165,8 @@ const Cylinders = () => {
                 </button>
                 {isOpen && (
                     <>
-                        <div 
-                            className="fixed inset-0 z-10" 
+                        <div
+                            className="fixed inset-0 z-10"
                             onClick={() => setIsOpen(false)}
                         ></div>
                         <div className="absolute top-full left-0 mt-1 bg-white border border-[#E5E7EB] shadow-lg z-20 min-w-[250px] max-h-80">
@@ -277,23 +278,23 @@ const Cylinders = () => {
         );
 
         // Filter by status
-        const matchesStatus = selectedStatuses.length === 0 || 
+        const matchesStatus = selectedStatuses.length === 0 ||
             selectedStatuses.includes(c.status);
-        
+
         // Filter by volume
-        const matchesVolume = selectedVolumes.length === 0 || 
+        const matchesVolume = selectedVolumes.length === 0 ||
             selectedVolumes.includes(c.volume);
-        
+
         // Filter by customer
-        const matchesCustomer = selectedCustomers.length === 0 || 
+        const matchesCustomer = selectedCustomers.length === 0 ||
             selectedCustomers.includes(c.customer_name);
-        
+
         // Filter by category
-        const matchesCategory = selectedCategories.length === 0 || 
+        const matchesCategory = selectedCategories.length === 0 ||
             selectedCategories.includes(c.category);
 
-        return matchesSearch && matchesStatus && matchesVolume && 
-               matchesCustomer && matchesCategory;
+        return matchesSearch && matchesStatus && matchesVolume &&
+            matchesCustomer && matchesCategory;
     });
 
     // Calculate totals
@@ -308,22 +309,20 @@ const Cylinders = () => {
             <div className="flex items-center gap-1 mb-8 border-b border-[#E5E7EB]">
                 <button
                     onClick={() => setActiveView('list')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'list' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
-                            : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'list'
+                        ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
+                        : 'text-[#6B7280] hover:text-[#374151]'
+                        }`}
                     style={activeView === 'list' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Danh sách
                 </button>
                 <button
                     onClick={() => setActiveView('stats')}
-                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${
-                        activeView === 'stats' 
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]' 
-                            : 'text-[#6B7280] hover:text-[#374151]'
-                    }`}
+                    className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'stats'
+                        ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
+                        : 'text-[#6B7280] hover:text-[#374151]'
+                        }`}
                     style={activeView === 'stats' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
                     Thống kê
@@ -335,16 +334,18 @@ const Cylinders = () => {
                     {/* Header with Add Button */}
                     <div className="flex items-center justify-between mb-6">
                         <h1 className="text-2xl font-semibold text-[#111827] tracking-tight" style={{ color: '#111827' }}>Danh sách bình khí</h1>
-                        <button
-                            onClick={handleCreateNew}
-                            className="flex items-center gap-2 px-5 py-2.5 text-white font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md"
-                            style={{ backgroundColor: '#2563EB' }}
-                            onMouseEnter={(e) => e.target.style.backgroundColor = '#1D4ED8'}
-                            onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
-                        >
-                            <Plus className="w-4 h-4" />
-                            Thêm
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleCreateNew}
+                                className="flex items-center gap-2 px-5 py-2.5 text-white font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md rounded-md"
+                                style={{ backgroundColor: '#2563EB' }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#1D4ED8'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
+                            >
+                                <Plus className="w-4 h-4" />
+                                Thêm
+                            </button>
+                        </div>
                     </div>
 
                     {/* Search Bar and Summary Stats - Same Row */}
@@ -580,7 +581,7 @@ const Cylinders = () => {
                                                 </span>
                                             </td>}
                                             {isColumnVisible('status') && <td className="px-4 py-4">
-                                                <span 
+                                                <span
                                                     className="inline-flex items-center px-3 py-1.5 text-xs font-medium border"
                                                     style={(() => {
                                                         const colorMap = {
@@ -801,6 +802,16 @@ const Cylinders = () => {
                     onClose={() => setIsDetailsModalOpen(false)}
                 />
             )}
+
+            <CylinderQCDialog
+                isOpen={isQCModalOpen}
+                onClose={() => setIsQCModalOpen(false)}
+                onSuccess={(count) => {
+                    setIsQCModalOpen(false);
+                    alert(`Đã cập nhật dữ liệu QC cho ${count} vỏ bình thành công!`);
+                    fetchCylinders();
+                }}
+            />
         </div>
     );
 };

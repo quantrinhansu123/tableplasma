@@ -1,130 +1,174 @@
-import { ITEM_TYPES } from '../constants/goodsReceiptConstants';
+import React from 'react';
 import { WAREHOUSES } from '../constants/orderConstants';
 
+const formatNumber = (val) => {
+    if (val === null || val === undefined || val === '' || val === 0) return '';
+    const parts = val.toString().split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return parts.join(',');
+};
+
 const getLabel = (list, id) => list.find(item => item.id === id)?.label || id;
+const getWarehouseLabel = (id) => WAREHOUSES.find(w => w.id === id)?.label || id;
 
 const ReceiptItem = ({ receipt, items }) => {
     if (!receipt) return null;
 
-    const totalAmount = items.reduce((sum, i) => sum + (i.total_price || 0), 0);
+    const today = receipt.receipt_date ? new Date(receipt.receipt_date) : new Date(receipt.created_at || Date.now());
+    const day = today.getDate();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+
+    // Prepare rows, padding to at least 5 rows for aesthetics if there are few items
+    // If the item is a cylinder and has a serial, we treat it similarly, but here the image shows 1 row per serial if needed, 
+    // or just 1 row per item if serial isn't strictly separated. Let's list each item.
+    const rows = items.map((item, idx) => ({
+        stt: idx + 1,
+        name: item.item_name || '',
+        code: item.serial_number || item.item_type || '',
+        unit: item.unit || (item.item_name?.toLowerCase().includes('bình') ? 'Bình' : 'Cái'),
+        qtyReq: item.quantity || 0,
+        qtyActual: item.quantity || 0, // Assuming actual = req for now
+        price: '', // Leaving price blank in the print template unless needed
+        totalNote: item.note || '' // Repurposing total column for notes/customers based on the user's image
+    }));
+
+    while (rows.length < 5) {
+        rows.push({ stt: '', name: '', code: '', unit: '', qtyReq: '', qtyActual: '', price: '', totalNote: '' });
+    }
+
     const totalQty = items.reduce((sum, i) => sum + (i.quantity || 0), 0);
 
     return (
-        <div className="order-print-page" style={{
-            padding: '15mm',
-            background: 'white',
-            color: 'black',
-            fontFamily: '"Be Vietnam Pro", "Roboto", sans-serif',
-            fontSize: '13px',
-            lineHeight: '1.6',
-            minHeight: '100vh',
-            boxSizing: 'border-box'
-        }}>
+        <div className="order-print-page p-8 bg-white text-black" style={{ fontFamily: '"Times New Roman", serif', fontSize: '13px', lineHeight: '1.6' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #111', paddingBottom: '16px', marginBottom: '24px' }}>
-                <div>
-                    <h1 style={{ fontSize: '24px', fontWeight: 900, color: '#10b981', margin: 0, letterSpacing: '-0.5px' }}>PlasmaVN</h1>
-                    <p style={{ fontSize: '10px', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '2px', margin: '4px 0 0' }}>Hệ thống quản lý kho</p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>PHIẾU NHẬP KHO</h2>
-                    <p style={{ fontSize: '13px', fontWeight: 500, color: '#444', margin: '2px 0' }}>
-                        Mã phiếu: <span style={{ fontWeight: 900, color: '#000' }}>#{receipt.receipt_code}</span>
+            <div className="flex justify-between items-start mb-1">
+                <div className="text-center" style={{ maxWidth: '300px' }}>
+                    <p className="font-bold text-sm" style={{ fontSize: '13px' }}>CÔNG TY CỔ PHẦN</p>
+                    <p className="font-bold text-sm" style={{ fontSize: '13px' }}>CÔNG NGHỆ PLASMA VIỆT NAM</p>
+                    <p className="text-xs mt-1 italic" style={{ fontSize: '11px' }}>
+                        12BT7, khu đô thị Văn Quán - Yên Phúc,<br />P.Hà Đông, TP.Hà Nội.
                     </p>
-                    <p style={{ fontSize: '11px', color: '#888' }}>
-                        {receipt.receipt_date ? new Date(receipt.receipt_date).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN')}
+                </div>
+                <div className="text-right" style={{ maxWidth: '280px' }}>
+                    <p className="font-bold" style={{ fontSize: '13px' }}>Mẫu số 02 - VT</p>
+                    <p className="text-xs italic" style={{ fontSize: '10px' }}>
+                        (Ban hành theo Thông tư số 133/2016/TT-BTC<br />
+                        Ngày 26/08/2016 của Bộ Tài chính)
                     </p>
                 </div>
             </div>
 
-            {/* Info Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '24px' }}>
-                <div>
-                    <h3 style={{ fontSize: '10px', fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>Nhà cung cấp</h3>
-                    <p style={{ fontSize: '15px', fontWeight: 700, margin: '4px 0' }}>{receipt.supplier_name}</p>
-                </div>
-                <div>
-                    <h3 style={{ fontSize: '10px', fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px', borderBottom: '1px solid #eee', paddingBottom: '4px' }}>Thông tin nhập kho</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: '#666' }}>Kho nhận:</span> {getLabel(WAREHOUSES, receipt.warehouse_id)}</p>
-                        <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: '#666' }}>Người nhận:</span> {receipt.received_by || '—'}</p>
-                        <p style={{ margin: 0 }}><span style={{ fontWeight: 700, color: '#666' }}>Ngày nhập:</span> {receipt.receipt_date ? new Date(receipt.receipt_date).toLocaleDateString('vi-VN') : '—'}</p>
-                    </div>
+            {/* Title */}
+            <div className="text-center my-4">
+                <h1 className="text-xl font-bold tracking-wide" style={{ fontSize: '20px' }}>PHIẾU XUẤT KHO</h1>
+                <p className="italic text-sm" style={{ fontSize: '13px' }}>
+                    Ngày {String(day).padStart(2, '0')} tháng {String(month).padStart(2, '0')} năm {year}
+                </p>
+                <div className="flex justify-center gap-16 mt-1" style={{ fontSize: '13px' }}>
+                    <span>Số: <span className="font-bold">{receipt.receipt_code}</span></span>
+                    <span>Nợ: ...............</span>
+                    <span>Có: ...............</span>
                 </div>
             </div>
 
-            {/* Items Table */}
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px' }}>
+            {/* Info */}
+            <div className="mb-4 space-y-1" style={{ fontSize: '13px' }}>
+                <p>
+                    - Họ và tên người nhận hàng: Công ty TNHH Dịch vụ Y Tế Cộng đồng CHS
+                </p>
+                <p>
+                    - Địa chỉ (bộ phận): Hải Âu 02-57 Vinhomes Ocean Park, Xã Gia lâm, TP Hà Nội, Việt Nam
+                </p>
+                <p>
+                    - Lý do xuất kho (nguyên lý): Nhập hàng từ NCC - {receipt.note || `Nhập ${String(totalQty).padStart(2, '0')} sản phẩm`}
+                </p>
+            </div>
+
+            {/* Table */}
+            <table className="w-full border-collapse mb-4" style={{ fontSize: '12px' }}>
                 <thead>
-                    <tr style={{ background: '#f8f8f8', borderTop: '2px solid #111', borderBottom: '2px solid #111' }}>
-                        <th style={{ padding: '10px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', width: '40px' }}>STT</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Loại</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Tên hàng hóa</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Serial</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Trạng thái</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'center', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>SL</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'left', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>ĐVT</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Đơn giá</th>
-                        <th style={{ padding: '10px 8px', textAlign: 'right', fontSize: '11px', fontWeight: 900, textTransform: 'uppercase' }}>Thành tiền</th>
+                    <tr>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '35px' }}>STT</th>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom">
+                            Tên, nhãn hiệu, quy cách,<br />phẩm chất vật tư, dụng cụ,<br />sản phẩm, hàng hóa
+                        </th>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '90px' }}>Mã số</th>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '55px' }}>Đơn vị<br />tính</th>
+                        <th colSpan={2} className="border border-black px-2 py-1 text-center">Số lượng</th>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '80px' }}>Đơn giá</th>
+                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '120px' }}>Thành tiền</th>
+                    </tr>
+                    <tr>
+                        <th className="border border-black px-2 py-1 text-center" style={{ width: '55px' }}>Yêu<br />cầu</th>
+                        <th className="border border-black px-2 py-1 text-center" style={{ width: '55px' }}>Thực<br />xuất</th>
+                    </tr>
+                    <tr style={{ fontSize: '11px' }}>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">A</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">B</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">C</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">D</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">1</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">2</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">3</th>
+                        <th className="border border-black px-1 py-0.5 text-center font-normal">4</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '8px', textAlign: 'center', fontWeight: 500 }}>{(idx + 1).toString().padStart(2, '0')}</td>
-                            <td style={{ padding: '8px' }}>{getLabel(ITEM_TYPES, item.item_type)}</td>
-                            <td style={{ padding: '8px', fontWeight: 700 }}>{item.item_name}</td>
-                            <td style={{ padding: '8px' }}>{item.serial_number || '—'}</td>
-                            <td style={{ padding: '8px' }}>{item.item_status || '—'}</td>
-                            <td style={{ padding: '8px', textAlign: 'center', fontWeight: 900 }}>{item.quantity}</td>
-                            <td style={{ padding: '8px' }}>{item.unit}</td>
-                            <td style={{ padding: '8px', textAlign: 'right' }}>{new Intl.NumberFormat('vi-VN').format(item.unit_price || 0)}</td>
-                            <td style={{ padding: '8px', textAlign: 'right', fontWeight: 700 }}>{new Intl.NumberFormat('vi-VN').format(item.total_price || 0)}</td>
+                    {rows.map((row, idx) => (
+                        <tr key={idx}>
+                            <td className="border border-black px-2 py-1.5 text-center">{row.stt}</td>
+                            <td className="border border-black px-2 py-1.5">{row.name}</td>
+                            <td className="border border-black px-2 py-1.5 text-center">{row.code}</td>
+                            <td className="border border-black px-2 py-1.5 text-center">{row.unit}</td>
+                            <td className="border border-black px-2 py-1.5 text-center"></td>
+                            <td className="border border-black px-2 py-1.5 text-center">{row.qtyActual !== '' ? String(row.qtyActual).padStart(2, '0') : ''}</td>
+                            <td className="border border-black px-2 py-1.5 text-right">{row.price !== '' ? formatNumber(row.price) : ''}</td>
+                            <td className="border border-black px-2 py-1.5 text-left">{row.totalNote}</td>
                         </tr>
                     ))}
-                </tbody>
-                <tfoot>
-                    <tr style={{ borderTop: '2px solid #111' }}>
-                        <td colSpan={5} style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 900, fontSize: '13px' }}>TỔNG CỘNG</td>
-                        <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 900, fontSize: '14px' }}>{totalQty}</td>
-                        <td></td>
-                        <td></td>
-                        <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 900, fontSize: '14px', color: '#dc2626' }}>
-                            {new Intl.NumberFormat('vi-VN').format(totalAmount)} ₫
-                        </td>
+                    {/* Total row */}
+                    <tr className="font-bold">
+                        <td className="border border-black px-2 py-1.5"></td>
+                        <td className="border border-black px-2 py-1.5 text-center font-bold">Cộng:</td>
+                        <td className="border border-black px-2 py-1.5"></td>
+                        <td className="border border-black px-2 py-1.5"></td>
+                        <td className="border border-black px-2 py-1.5"></td>
+                        <td className="border border-black px-2 py-1.5 text-center font-bold">{String(totalQty).padStart(2, '0')}</td>
+                        <td className="border border-black px-2 py-1.5"></td>
+                        <td className="border border-black px-2 py-1.5"></td>
                     </tr>
-                </tfoot>
+                </tbody>
             </table>
 
-            {/* Note */}
-            {receipt.note && (
-                <div style={{ marginBottom: '24px', background: '#f9fafb', padding: '12px 16px', borderRadius: '8px', border: '1px solid #eee' }}>
-                    <h3 style={{ fontSize: '10px', fontWeight: 900, color: '#999', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>Ghi chú:</h3>
-                    <p style={{ fontSize: '13px', fontStyle: 'italic', color: '#555', margin: 0 }}>{receipt.note}</p>
-                </div>
-            )}
-
             {/* Signatures */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', textAlign: 'center', marginTop: '60px' }}>
+            <div className="grid grid-cols-5 gap-2 text-center mt-4" style={{ fontSize: '12px' }}>
                 <div>
-                    <p style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '60px' }}>Người lập phiếu</p>
-                    <div style={{ width: '120px', height: '1px', background: '#ccc', margin: '0 auto' }}></div>
+                    <p className="font-bold">Người lập phiếu</p>
+                    <p className="italic text-xs">(Ký, họ tên)</p>
+                    <div className="h-20"></div>
                 </div>
                 <div>
-                    <p style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '60px' }}>Thủ kho</p>
-                    <div style={{ width: '120px', height: '1px', background: '#ccc', margin: '0 auto' }}></div>
+                    <p className="font-bold">Người nhận hàng</p>
+                    <p className="italic text-xs">(Ký, họ tên)</p>
+                    <div className="h-20"></div>
                 </div>
                 <div>
-                    <p style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '60px' }}>Người duyệt</p>
-                    <div style={{ width: '120px', height: '1px', background: '#ccc', margin: '0 auto' }}></div>
+                    <p className="font-bold">Thủ kho</p>
+                    <p className="italic text-xs">(Ký, họ tên)</p>
+                    <div className="h-20"></div>
                 </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ marginTop: '40px', paddingTop: '16px', borderTop: '1px solid #eee', textAlign: 'center' }}>
-                <p style={{ fontSize: '9px', color: '#bbb', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '2px' }}>
-                    PlasmaVN — Hệ thống quản lý kho hàng
-                </p>
+                <div>
+                    <p className="font-bold">Kế toán trưởng</p>
+                    <p className="italic text-xs">(Hoặc bộ phận có<br />nhu cầu nhập)</p>
+                    <p className="italic text-xs">(Ký, họ tên)</p>
+                    <div className="h-20"></div>
+                </div>
+                <div>
+                    <p className="font-bold">Giám đốc</p>
+                    <p className="italic text-xs">(Ký, họ tên)</p>
+                    <div className="h-20"></div>
+                </div>
             </div>
         </div>
     );
@@ -132,10 +176,19 @@ const ReceiptItem = ({ receipt, items }) => {
 
 const GoodsReceiptPrintTemplate = ({ receipt, items }) => {
     if (!receipt) return null;
+    const receiptList = Array.isArray(receipt) ? receipt : [receipt];
+
+    // Fallback if bulk print is needed later
+    const itemsList = Array.isArray(items) ? items : [];
 
     return (
         <div className="bulk-print-container">
-            <ReceiptItem receipt={receipt} items={items || []} />
+            {receiptList.map((r, index) => (
+                <React.Fragment key={r.id || index}>
+                    <ReceiptItem receipt={r} items={itemsList} />
+                    {index < receiptList.length - 1 && <div className="page-break" />}
+                </React.Fragment>
+            ))}
         </div>
     );
 };

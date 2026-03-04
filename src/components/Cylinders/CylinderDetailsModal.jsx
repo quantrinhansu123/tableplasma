@@ -21,6 +21,7 @@ export default function CylinderDetailsModal({ cylinder, onClose }) {
     const [orders, setOrders] = useState([]);
     const [timeline, setTimeline] = useState([]);
     const [showFullTimeline, setShowFullTimeline] = useState(false);
+    const [qcData, setQcData] = useState(null);
 
     useEffect(() => {
         if (!cylinder) return;
@@ -50,6 +51,20 @@ export default function CylinderDetailsModal({ cylinder, onClose }) {
                 .from('goods_issue_items')
                 .select('*, goods_issues!inner(issue_code, supplier_id, warehouse_id, issue_date, status)')
                 .eq('item_code', cylinder.serial_number);
+
+            // 4. QC Data
+            const { data: qcDataRes, error: qcError } = await supabase
+                .from('cylinder_qc_records')
+                .select('*')
+                .eq('serial_number', cylinder.serial_number)
+                .single();
+
+            // Ignore 406 (Not Found) or 42P01 (Table not found)
+            if (qcDataRes) {
+                setQcData(qcDataRes);
+            } else {
+                setQcData(null);
+            }
 
             // Build unified timeline
             const events = [];
@@ -194,6 +209,63 @@ export default function CylinderDetailsModal({ cylinder, onClose }) {
                         </div>
                     ) : (
                         <>
+                            {/* QC Metadata Section */}
+                            {qcData && (
+                                <div className="px-8 pt-6 pb-2">
+                                    <h3 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2 mb-4">
+                                        <Activity className="w-4 h-4 text-emerald-500" />
+                                        Thông số kỹ thuật (Kiểm định)
+                                    </h3>
+                                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div className="flex flex-col gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Trọng lượng vỏ</p>
+                                                <p className="font-black text-emerald-700">{qcData.empty_weight} kg</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Chất liệu</p>
+                                                <p className="font-black text-slate-700 text-xs">{qcData.material || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Dung tích</p>
+                                                <p className="font-black text-emerald-700">{qcData.water_capacity} L</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Thời gian giữ áp</p>
+                                                <p className="font-black text-slate-700 text-xs">{qcData.hold_time || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-3">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Lô / Mẫu</p>
+                                                <p className="font-black text-slate-700 text-sm">
+                                                    {qcData.batch_no || '—'}<br />
+                                                    <span className="text-[10px] font-semibold text-slate-500">{qcData.product_type}</span>
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Áp suất Test</p>
+                                                <p className="font-black text-slate-700 text-xs">{qcData.test_pressure || '—'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col justify-between">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Kết luận kiểm định</p>
+                                                <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-xs font-black inline-block mt-1">
+                                                    {qcData.conclusion || 'OK'}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 mt-3">Tiêu chuẩn</p>
+                                                <p className="font-black text-slate-700 text-xs">{qcData.standard || '—'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Timeline Section - Vòng đời bình */}
                             <div className="px-8 pt-6 pb-4">
                                 <div className="flex items-center justify-between mb-4">
