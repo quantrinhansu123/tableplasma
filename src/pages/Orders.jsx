@@ -14,11 +14,14 @@ import {
     ChevronDown,
     Edit,
     Filter,
+    MapPin,
     Package,
+    Phone,
     Plus,
     Printer,
     Search,
-    Trash2
+    Trash2,
+    User
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Bar as BarChartJS, Pie as PieChartJS } from 'react-chartjs-2';
@@ -32,7 +35,8 @@ import {
     ORDER_STATUSES,
     ORDER_TYPES,
     PRODUCT_TYPES,
-    TABLE_COLUMNS
+    TABLE_COLUMNS,
+    WAREHOUSES
 } from '../constants/orderConstants';
 import useColumnVisibility from '../hooks/useColumnVisibility';
 import usePermissions from '../hooks/usePermissions';
@@ -392,13 +396,13 @@ const Orders = () => {
             {activeView === 'list' ? (
                 <>
                     {/* Header with Add Button */}
-                    <div className="flex items-center justify-between mb-6">
-                        <h1 className="text-2xl font-semibold text-[#111827] tracking-tight" style={{ color: '#111827' }}>Danh sách đơn hàng</h1>
-                        <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                        <h1 className="text-xl sm:text-2xl font-black text-[#111827] tracking-tight">Danh sách đơn hàng</h1>
+                        <div className="flex items-center gap-2">
                             {selectedIds.length > 0 && (
                                 <button
                                     onClick={handleBulkPrint}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#D1D5DB] text-[#374151] rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:bg-[#F9FAFB]"
+                                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-[#D1D5DB] text-[#374151] rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:bg-[#F9FAFB]"
                                 >
                                     <Printer className="w-4 h-4" />
                                     In {selectedIds.length} phiếu
@@ -406,42 +410,37 @@ const Orders = () => {
                             )}
                             <button
                                 onClick={() => navigate('/tao-don-hang')}
-                                className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-medium text-sm transition-all duration-200 shadow-sm hover:shadow-md"
-                                style={{ backgroundColor: '#2563EB' }}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = '#1D4ED8'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = '#2563EB'}
+                                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-[#2563EB] text-white rounded-xl font-bold text-sm shadow-lg hover:bg-[#1D4ED8] transition-all"
                             >
                                 <Plus className="w-4 h-4" />
-                                Thêm
+                                <span>Tạo mới</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Search Bar and Summary Stats - Same Row */}
-                    <div className="mb-6 flex items-center gap-4">
+                    <div className="mb-6 flex flex-col lg:flex-row lg:items-center gap-4">
                         {/* Search Bar */}
                         <div className="flex-1 relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9CA3AF]" />
                             <input
                                 type="text"
-                                placeholder="Tìm theo tên, email, SĐT..."
-                                className="w-full pl-12 pr-4 py-3 border border-[#D1D5DB] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] bg-white text-[#111827] placeholder-[#9CA3AF] text-sm transition-all"
-                                style={{ fontFamily: '"Roboto", sans-serif' }}
+                                placeholder="Tìm theo tên, mã đơn, SĐT..."
+                                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 text-sm font-medium transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
 
                         {/* Summary Stats */}
-                        <div className="flex items-center gap-6 px-6 py-3 bg-[#EFF6FF] border border-[#BFDBFE]">
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#6B7280]" style={{ fontFamily: '"Roboto", sans-serif' }}>Số lượng đơn hàng:</span>
-                                <span className="text-lg font-semibold text-[#2563EB]" style={{ fontFamily: '"Roboto", sans-serif' }}>{filteredOrdersCount}</span>
+                        <div className="flex items-center justify-around sm:justify-start gap-4 sm:gap-6 px-4 py-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-center sm:text-left">
+                                <span className="text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-widest">Đơn hàng</span>
+                                <span className="text-sm sm:text-lg font-black text-blue-600 leading-none">{filteredOrdersCount}</span>
                             </div>
-                            <div className="w-px h-8 bg-[#BFDBFE]"></div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-[#6B7280]" style={{ fontFamily: '"Roboto", sans-serif' }}>Tổng tiền:</span>
-                                <span className="text-lg font-semibold text-[#2563EB]" style={{ fontFamily: '"Roboto", sans-serif' }}>{formatNumber(totalAmount)} đ</span>
+                            <div className="hidden sm:block w-px h-8 bg-blue-200/50"></div>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-center sm:text-left border-l border-blue-100 sm:border-none pl-4 sm:pl-0">
+                                <span className="text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-widest">Tổng tiền</span>
+                                <span className="text-sm sm:text-lg font-black text-blue-600 leading-none">{formatNumber(totalAmount)} đ</span>
                             </div>
                         </div>
                     </div>
@@ -622,10 +621,166 @@ const Orders = () => {
 
 
                     {/* Main Content Card */}
-                    <div className="bg-white rounded-lg border border-[#E5E7EB] shadow-sm">
+                    <div className="bg-white rounded-lg border border-[#E5E7EB] shadow-sm overflow-hidden">
+                        {/* Mobile Card List (Visible only on mobile) */}
+                        <div className="md:hidden divide-y divide-[#E5E7EB]">
+                            {isLoading ? (
+                                <div className="px-4 py-16 text-center">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-[#6B7280] text-sm font-medium">Đang tải dữ liệu...</p>
+                                    </div>
+                                </div>
+                            ) : filteredOrders.length === 0 ? (
+                                <div className="px-4 py-16 text-center">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <Package className="w-12 h-12 text-[#D1D5DB]" />
+                                        <p className="text-sm font-medium text-[#6B7280]">Không tìm thấy đơn hàng nào</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                filteredOrders.map((order) => {
+                                    const status = getStatusConfig(order.status);
+                                    return (
+                                        <div key={order.id} className="p-4 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="w-5 h-5 rounded border-[#D1D5DB] text-[#2563EB] focus:ring-[#2563EB] cursor-pointer"
+                                                        checked={selectedIds.includes(order.id)}
+                                                        onChange={() => toggleSelect(order.id)}
+                                                    />
+                                                    <span className="text-sm font-bold text-[#111827]">{order.order_code}</span>
+                                                </div>
+                                                <span
+                                                    className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border uppercase"
+                                                    style={(() => {
+                                                        const colorMap = {
+                                                            'blue': { bg: '#E0E7FF', text: '#4338CA', border: '#C7D2FE' },
+                                                            'yellow': { bg: '#FEF3C7', text: '#92400E', border: '#FDE68A' },
+                                                            'orange': { bg: '#FFEDD5', text: '#C2410C', border: '#FED7AA' },
+                                                            'indigo': { bg: '#E0E7FF', text: '#4338CA', border: '#C7D2FE' },
+                                                            'purple': { bg: '#F3E8FF', text: '#7C3AED', border: '#E9D5FF' },
+                                                            'cyan': { bg: '#CFFAFE', text: '#0E7490', border: '#A5F3FC' },
+                                                            'red': { bg: '#FEE2E2', text: '#991B1B', border: '#FECACA' },
+                                                            'green': { bg: '#D1FAE5', text: '#065F46', border: '#A7F3D0' },
+                                                            'gray': { bg: '#F3F4F6', text: '#374151', border: '#E5E7EB' }
+                                                        };
+                                                        const colors = colorMap[status.color] || colorMap['gray'];
+                                                        return {
+                                                            backgroundColor: colors.bg,
+                                                            color: colors.text,
+                                                            borderColor: colors.border
+                                                        };
+                                                    })()}
+                                                >
+                                                    {status.label}
+                                                </span>
+                                            </div>
 
-                        {/* Table Section */}
-                        <div className="w-full overflow-x-auto">
+                                            <div className="space-y-3 ml-7">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-[#111827] leading-snug">{order.customer_name}</h3>
+                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{getLabel(CUSTOMER_CATEGORIES, order.customer_category)}</span>
+                                                        <span className="text-[11px] font-medium text-slate-400">{order.created_at ? new Date(order.created_at).toLocaleDateString('vi-VN') : '---'}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-y-2 text-xs">
+                                                    <div className="space-y-1">
+                                                        <p className="text-[#6B7280] font-medium flex items-center gap-1.5">
+                                                            <Package className="w-3.5 h-3.5 text-blue-500" />
+                                                            {getLabel(PRODUCT_TYPES, order.product_type)}
+                                                        </p>
+                                                        <p className="text-[#111827] font-bold ml-5">SL: {formatNumber(order.quantity)}</p>
+                                                    </div>
+                                                    <div className="space-y-1 pl-2 border-l border-slate-100">
+                                                        <p className="text-[#6B7280] font-medium flex items-center gap-1.5">
+                                                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                                            Kho: {getLabel(WAREHOUSES, order.warehouse)}
+                                                        </p>
+                                                        <p className="text-[#6B7280] font-medium flex items-center gap-1.5">
+                                                            <Filter className="w-3.5 h-3.5 text-slate-400" />
+                                                            Loại: {getLabel(ORDER_TYPES, order.order_type)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {(order.recipient_name || order.recipient_phone) && (
+                                                    <div className="bg-slate-50/80 rounded-lg p-2.5 space-y-1 border border-slate-100/50">
+                                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Người nhận</p>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <User className="w-3.5 h-3.5 text-slate-400" />
+                                                                <span className="text-xs font-bold text-slate-700">{order.recipient_name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                                <Phone className="w-3 h-3" />
+                                                                <span className="text-[11px] font-medium">{order.recipient_phone}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {order.product_type?.startsWith('MAY') && order.department && (
+                                                    <div className="flex items-center gap-2 text-xs">
+                                                        <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-100 rounded font-bold uppercase tracking-wider text-[10px]">Mã máy</span>
+                                                        <span className="font-bold text-slate-700">{order.department}</span>
+                                                    </div>
+                                                )}
+
+                                                {order.assigned_cylinders && order.assigned_cylinders.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {order.assigned_cylinders.slice(0, 4).map((serial, idx) => (
+                                                            <span key={idx} className="px-2 py-0.5 bg-white border border-slate-200 text-slate-600 rounded text-[10px] font-mono font-bold shadow-sm">
+                                                                {serial}
+                                                            </span>
+                                                        ))}
+                                                        {order.assigned_cylinders.length > 4 && (
+                                                            <span className="text-[10px] font-bold text-blue-600 self-center">+{order.assigned_cylinders.length - 4} nữa</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-50 ml-7">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Thành tiền</span>
+                                                    <span className="text-base font-black text-[#2563EB]">
+                                                        {formatNumber(order.total_amount || (order.quantity || 0) * (order.unit_price || 0))} <small className="text-[10px] font-bold">đ</small>
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <button
+                                                        onClick={() => handlePrint(order)}
+                                                        className="p-2 text-[#9CA3AF] hover:text-[#2563EB] active:bg-blue-50 rounded-lg transition-colors border border-transparent active:border-blue-100"
+                                                    >
+                                                        <Printer className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEditOrder(order)}
+                                                        className="p-2 text-[#9CA3AF] hover:text-[#2563EB] active:bg-blue-50 rounded-lg transition-colors border border-transparent active:border-blue-100"
+                                                    >
+                                                        <Edit className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteOrder(order.id, order.order_code)}
+                                                        className="p-2 text-[#9CA3AF] hover:text-[#DC2626] active:bg-red-50 rounded-lg transition-colors border border-transparent active:border-red-100"
+                                                    >
+                                                        <Trash2 className="w-5 h-5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+
+                        {/* Desktop Table View (Hidden on mobile) */}
+                        <div className="hidden md:block w-full overflow-x-auto">
                             <table className="w-full border-collapse">
                                 <thead className="bg-[#F9FAFB]">
                                     <tr>

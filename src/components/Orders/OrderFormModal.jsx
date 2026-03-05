@@ -250,27 +250,27 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
     };
 
     return (<>
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-start justify-center pt-20 z-[100] p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-start sm:items-center justify-center sm:pt-20 z-[100] p-0 sm:p-4 animate-in fade-in duration-200">
+            <div className="bg-white sm:rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col h-full sm:h-auto sm:max-h-[92vh]">
 
                 {/* Header */}
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50 transition-transform hover:rotate-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
                             {isEdit ? <Edit3 className="w-5 h-5" /> : <Package className="w-5 h-5" />}
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                                {isEdit ? 'Chỉnh sửa Đơn hàng' : 'Khởi tạo Đơn hàng'}
+                            <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight leading-tight">
+                                {isEdit ? 'Chỉnh sửa Đơn hàng' : 'Tạo Đơn hàng mới'}
                             </h3>
-                            <p className="text-slate-500 text-[11px] font-black uppercase tracking-widest mt-0.5">
+                            <p className="text-slate-500 text-[9px] sm:text-[11px] font-black uppercase tracking-widest mt-0.5">
                                 Mã đơn: {formData.orderCode}
                             </p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2.5 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-2xl transition-all duration-200"
+                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
                     >
                         <X className="w-6 h-6" />
                     </button>
@@ -504,27 +504,27 @@ export default function OrderFormModal({ order, onClose, onSuccess }) {
                     </form>
                 </div>
 
-                <div className="p-4 bg-slate-50/10 border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.02)] relative z-10 font-sans">
+                <div className="p-4 bg-white border-t border-slate-100 shrink-0 flex items-center justify-end gap-3 rounded-b-[2rem]">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-6 py-2.5 text-sm font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest outline-none"
+                        className="px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-black text-slate-400 hover:text-slate-900 transition-colors uppercase tracking-widest outline-none"
                         disabled={isLoading}
                     >
-                        Hủy thoát
+                        Hủy
                     </button>
                     <button
                         type="submit"
                         form="orderForm"
                         disabled={isLoading}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-[0.1em] rounded-2xl shadow-xl shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2.5 border border-blue-700 disabled:opacity-50 disabled:cursor-not-allowed group"
+                        className="flex-1 sm:flex-none px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-[0.1em] rounded-2xl shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-2.5 border border-blue-700 disabled:opacity-50 group"
                     >
                         {isLoading ? (
                             <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
                             <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
                         )}
-                        {isEdit ? 'Lưu thay đổi' : 'Xác nhận tạo ĐH'}
+                        {isEdit ? 'Lưu' : 'Xác nhận tạo ĐH'}
                     </button>
                 </div>
 
