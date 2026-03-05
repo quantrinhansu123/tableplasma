@@ -6,17 +6,46 @@ import {
 
 const numberToVietnameseWords = (num) => {
     if (!num || num === 0) return 'Không';
+    const units = ['', 'nghìn', 'triệu', 'tỷ'];
     const ones = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
-    const teens = ['mười', 'mười một', 'mười hai', 'mười ba', 'mười bốn', 'mười lăm', 'mười sáu', 'mười bảy', 'mười tám', 'mười chín'];
 
-    if (num < 10) return ones[num];
-    if (num < 20) return teens[num - 10];
-    if (num < 100) {
-        const ten = Math.floor(num / 10);
-        const one = num % 10;
-        return ones[ten] + ' mươi' + (one ? ' ' + (one === 5 ? 'lăm' : one === 1 ? 'mốt' : ones[one]) : '');
+    const readGroup = (n) => {
+        const h = Math.floor(n / 100);
+        const t = Math.floor((n % 100) / 10);
+        const o = n % 10;
+        let result = '';
+        if (h > 0) result += ones[h] + ' trăm ';
+        if (t > 1) {
+            result += ones[t] + ' mươi ';
+            if (o === 1) result += 'mốt';
+            else if (o === 5) result += 'lăm';
+            else if (o > 0) result += ones[o];
+        } else if (t === 1) {
+            result += 'mười ';
+            if (o === 5) result += 'lăm';
+            else if (o > 0) result += ones[o];
+        } else if (t === 0 && h > 0 && o > 0) {
+            result += 'lẻ ' + ones[o];
+        } else if (o > 0) {
+            result += ones[o];
+        }
+        return result.trim();
+    };
+
+    const groups = [];
+    let n = Math.floor(num);
+    while (n > 0) {
+        groups.push(n % 1000);
+        n = Math.floor(n / 1000);
     }
-    return String(num);
+
+    let result = '';
+    for (let i = groups.length - 1; i >= 0; i--) {
+        if (groups[i] > 0) {
+            result += readGroup(groups[i]) + ' ' + units[i] + ' ';
+        }
+    }
+    return result.trim().replace(/^\w/, c => c.toUpperCase()) + ' đồng';
 };
 
 const formatNumber = (val) => {
@@ -24,6 +53,225 @@ const formatNumber = (val) => {
     const parts = val.toString().split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return parts.join(',');
+};
+
+// All styles use inline CSS to bypass global !important overrides in index.css
+const S = {
+    page: {
+        fontFamily: '"Times New Roman", Times, serif',
+        fontSize: '13pt',
+        lineHeight: '1.4',
+        color: '#000',
+        background: '#fff',
+        width: '100%',
+        padding: '15mm 20mm 15mm 25mm',
+        boxSizing: 'border-box',
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        marginBottom: '5mm',
+    },
+    headerLeft: {
+        flex: '0 0 58%',
+        fontSize: '11pt',
+    },
+    headerRight: {
+        flex: '0 0 40%',
+        textAlign: 'center',
+        fontSize: '10pt',
+    },
+    companyName: {
+        fontSize: '11pt',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+    },
+    companyInfo: {
+        fontSize: '11pt',
+        marginTop: '2px',
+        fontWeight: 'normal',
+    },
+    formNumber: {
+        fontWeight: 'bold',
+        fontSize: '12pt',
+    },
+    formLegal: {
+        fontSize: '10pt',
+        fontStyle: 'italic',
+        fontWeight: 'normal',
+    },
+    titleSection: {
+        textAlign: 'center',
+        margin: '6mm 0 3mm',
+    },
+    titleH1: {
+        fontSize: '17pt',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        marginBottom: '2mm',
+    },
+    dateLine: {
+        fontSize: '12pt',
+        fontWeight: 'bold',
+        marginBottom: '2mm',
+    },
+    titleRow: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+    },
+    titleCenter: {
+        textAlign: 'center',
+        flex: '1',
+        fontSize: '13pt',
+    },
+    debitCredit: {
+        textAlign: 'right',
+        fontSize: '13pt',
+        minWidth: '100px',
+    },
+    infoSection: {
+        margin: '3mm 0',
+    },
+    infoRow: {
+        display: 'flex',
+        alignItems: 'baseline',
+        marginBottom: '2mm',
+        fontSize: '13pt',
+    },
+    infoLabel: {
+        whiteSpace: 'nowrap',
+        fontWeight: 'normal',
+    },
+    infoValue: {
+        flex: '1',
+        borderBottom: '1px dotted #000',
+        fontFamily: '"Times New Roman", Times, serif',
+        fontSize: '13pt',
+        padding: '0 4px',
+        minHeight: '20px',
+        fontWeight: 'normal',
+    },
+    infoRowSplit: {
+        display: 'flex',
+        alignItems: 'baseline',
+        marginBottom: '2mm',
+        fontSize: '13pt',
+    },
+    splitHalf: {
+        flex: '1',
+        display: 'flex',
+        alignItems: 'baseline',
+    },
+    // Table styles
+    table: {
+        width: '100%',
+        borderCollapse: 'collapse',
+        margin: '3mm 0',
+        fontSize: '10pt',
+    },
+    th: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        fontWeight: 'bold',
+        fontSize: '10pt',
+        whiteSpace: 'normal',
+        color: '#000',
+        background: 'transparent',
+    },
+    td: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        fontSize: '10pt',
+        fontWeight: 'normal',
+        color: '#000',
+        whiteSpace: 'normal',
+    },
+    tdLeft: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'left',
+        verticalAlign: 'middle',
+        fontSize: '10pt',
+        fontWeight: 'normal',
+        color: '#000',
+        whiteSpace: 'normal',
+    },
+    tdRight: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'right',
+        verticalAlign: 'middle',
+        fontSize: '10pt',
+        fontWeight: 'normal',
+        color: '#000',
+        whiteSpace: 'normal',
+    },
+    tdBold: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'center',
+        verticalAlign: 'middle',
+        fontSize: '10pt',
+        fontWeight: 'bold',
+        color: '#000',
+        whiteSpace: 'normal',
+    },
+    tdBoldRight: {
+        border: '1px solid #000',
+        padding: '3px 4px',
+        textAlign: 'right',
+        verticalAlign: 'middle',
+        fontSize: '10pt',
+        fontWeight: 'bold',
+        color: '#000',
+        whiteSpace: 'normal',
+    },
+    summarySection: {
+        margin: '3mm 0',
+        fontSize: '13pt',
+    },
+    dateFooter: {
+        textAlign: 'right',
+        fontSize: '13pt',
+        margin: '3mm 0 2mm',
+        fontStyle: 'italic',
+        fontWeight: 'normal',
+    },
+    signatureSection: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        textAlign: 'center',
+        marginTop: '5mm',
+        fontSize: '12pt',
+    },
+    sigBlock: {
+        width: '18%',
+    },
+    sigTitle: {
+        fontWeight: 'bold',
+        fontSize: '13pt',
+        marginBottom: '2px',
+    },
+    sigSubtitle: {
+        fontStyle: 'italic',
+        fontSize: '12pt',
+        fontWeight: 'normal',
+    },
+    sigSpace: {
+        height: '50px',
+    },
+    dots: {
+        borderBottom: '1px dotted #000',
+        display: 'inline-block',
+        minWidth: '60px',
+        textAlign: 'center',
+        fontFamily: '"Times New Roman", Times, serif',
+    },
 };
 
 const OrderItem = ({ order }) => {
@@ -36,11 +284,11 @@ const OrderItem = ({ order }) => {
     const productLabel = getProductLabel(order.product_type);
     const isBinh = order.product_type?.startsWith('BINH');
     const today = new Date(order.created_at || Date.now());
-    const day = today.getDate();
-    const month = today.getMonth() + 1;
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
 
-    // Build table rows - each serial = 1 row if bình, else 1 row for the product
+    // Build table rows
     const rows = [];
     if (isBinh && serials.length > 0) {
         serials.forEach((serial, idx) => {
@@ -49,7 +297,10 @@ const OrderItem = ({ order }) => {
                 name: productLabel,
                 code: serial,
                 unit: 'Bình',
-                qty: 1
+                qtyReq: 1,
+                qtyAct: 1,
+                price: order.unit_price || 0,
+                total: (order.unit_price || 0) * 1,
             });
         });
     } else {
@@ -58,150 +309,190 @@ const OrderItem = ({ order }) => {
             name: productLabel,
             code: order.department || '',
             unit: isBinh ? 'Bình' : 'Máy',
-            qty: order.quantity || 0
+            qtyReq: order.quantity || 0,
+            qtyAct: order.quantity || 0,
+            price: order.unit_price || 0,
+            total: (order.quantity || 0) * (order.unit_price || 0),
         });
     }
 
     // Pad to minimum 5 rows
     while (rows.length < 5) {
-        rows.push({ stt: rows.length + 1, name: '', code: '', unit: '', qty: '' });
+        rows.push({ stt: '', name: '', code: '', unit: '', qtyReq: '', qtyAct: '', price: '', total: '' });
     }
 
     const totalQty = isBinh && serials.length > 0 ? serials.length : (order.quantity || 0);
+    const totalAmount = order.total_amount || totalQty * (order.unit_price || 0);
+    const warehouseLabel = getWarehouseLabel(order.warehouse);
 
     return (
-        <div className="order-print-page p-8 bg-white text-black" style={{ fontFamily: '"Times New Roman", serif', fontSize: '13px', lineHeight: '1.6' }}>
-            {/* Header */}
-            <div className="flex justify-between items-start mb-1">
-                <div className="text-center" style={{ maxWidth: '300px' }}>
-                    <p className="font-bold text-sm" style={{ fontSize: '13px' }}>CÔNG TY CỔ PHẦN</p>
-                    <p className="font-bold text-sm" style={{ fontSize: '13px' }}>CÔNG NGHỆ PLASMA VIỆT NAM</p>
-                    <p className="text-xs mt-1 italic" style={{ fontSize: '11px' }}>
-                        12BT7, khu đô thị Văn Quán - Yên Phúc,<br />P.Hà Đông, TP.Hà Nội.
-                    </p>
+        <div className="order-print-page" style={S.page}>
+            {/* ===== HEADER ===== */}
+            <div style={S.header}>
+                <div style={S.headerLeft}>
+                    <div style={S.companyName}>CÔNG TY TNHH DỊCH VỤ Y TẾ CỘNG ĐỒNG CHS</div>
+                    <div style={S.companyInfo}>Hải âu 02 - 57 Vinhomes Ocean Park, Xã Gia Lâm, Thành phố Hà Nội, Việt Nam</div>
+                    <div style={S.companyInfo}>Mã số thuế: 0110517351</div>
+                    <div style={S.companyInfo}>TK ngân hàng: 8186222999 - Ngân hàng TMCP Quân đội</div>
+                    <div style={S.companyInfo}>Tel: 0981878423</div>
                 </div>
-                <div className="text-right" style={{ maxWidth: '280px' }}>
-                    <p className="font-bold" style={{ fontSize: '13px' }}>Mẫu số 02 - VT</p>
-                    <p className="text-xs italic" style={{ fontSize: '10px' }}>
+                <div style={S.headerRight}>
+                    <div style={S.formNumber}>Mẫu số: 02 - VT</div>
+                    <div style={S.formLegal}>
                         (Ban hành theo Thông tư số 133/2016/TT-BTC<br />
-                        Ngày 26/08/2016 của Bộ Tài chính)
-                    </p>
+                        ngày 26/08/2016 của Bộ Tài chính)
+                    </div>
                 </div>
             </div>
 
-            {/* Title */}
-            <div className="text-center my-4">
-                <h1 className="text-xl font-bold tracking-wide" style={{ fontSize: '20px' }}>PHIẾU XUẤT KHO</h1>
-                <p className="italic text-sm" style={{ fontSize: '13px' }}>
-                    Ngày {String(day).padStart(2, '0')} tháng {String(month).padStart(2, '0')} năm {year}
-                </p>
-                <div className="flex justify-center gap-16 mt-1" style={{ fontSize: '13px' }}>
-                    <span>Số: <span className="font-bold">{order.order_code}</span></span>
-                    <span>Nợ: ...............</span>
-                    <span>Có: ...............</span>
+            {/* ===== TITLE ===== */}
+            <div style={S.titleSection}>
+                <div style={S.titleH1}>PHIẾU XUẤT KHO</div>
+                <div style={S.dateLine}>
+                    Ngày {day} tháng {month} năm {year}
                 </div>
             </div>
 
-            {/* Info */}
-            <div className="mb-4 space-y-1" style={{ fontSize: '13px' }}>
-                <p>
-                    - Họ và tên người nhận hàng: <strong>{order.customer_name || ''}</strong>
-                    {order.recipient_name && order.recipient_name !== order.customer_name && ` (${order.recipient_name})`}
-                </p>
-                <p>
-                    - Địa chỉ (bộ phận): {order.recipient_address || ''}
-                </p>
-                <p>
-                    - Lý do xuất kho (nguyên lý): Xuất {String(totalQty).padStart(2, '0')} {productLabel}
-                    {order.department ? ` - ${order.department}` : ''}
-                </p>
+            <div style={S.titleRow}>
+                <div style={S.titleCenter}>
+                    Số: <span style={{ fontWeight: 'bold' }}>{order.order_code}</span>
+                </div>
+                <div style={S.debitCredit}>
+                    <div style={{ marginBottom: '2px' }}>Nợ: <span style={S.dots}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+                    <div>Có: <span style={S.dots}>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></div>
+                </div>
             </div>
 
-            {/* Table */}
-            <table className="w-full border-collapse mb-4" style={{ fontSize: '12px' }}>
+            {/* ===== INFO FIELDS ===== */}
+            <div style={S.infoSection}>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Họ và tên cơ sở phụ trách:</span>
+                    <span style={S.infoValue}>{order.customer_name || ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Nhân viên KD:</span>
+                    <span style={S.infoValue}>{order.sales_person || ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Họ và tên người nhận hàng:</span>
+                    <span style={S.infoValue}>{order.recipient_name || ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Địa chỉ (bộ phận):</span>
+                    <span style={S.infoValue}>{order.recipient_address || ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Số điện thoại:</span>
+                    <span style={S.infoValue}>{order.recipient_phone || ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Lý do xuất kho:</span>
+                    <span style={S.infoValue}>
+                        Xuất {String(totalQty).padStart(2, '0')} {productLabel}
+                        {order.department ? ` - ${order.department}` : ''}
+                    </span>
+                </div>
+                <div style={S.infoRowSplit}>
+                    <div style={S.splitHalf}>
+                        <span style={S.infoLabel}>- Xuất tại kho (ngăn lô):</span>
+                        <span style={S.infoValue}>{warehouseLabel || ''}</span>
+                    </div>
+                    <div style={S.splitHalf}>
+                        <span style={S.infoLabel}>Địa điểm:</span>
+                        <span style={S.infoValue}>{warehouseLabel || ''}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* ===== MAIN TABLE ===== */}
+            <table style={S.table}>
                 <thead>
                     <tr>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '35px' }}>STT</th>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom">
-                            Tên, nhãn hiệu, quy cách,<br />phẩm chất vật tư, dụng cụ,<br />sản phẩm, hàng hóa
+                        <th style={{ ...S.th, width: '6%' }} rowSpan={2}>STT</th>
+                        <th style={{ ...S.th, width: '28%' }} rowSpan={2}>
+                            Tên, nhãn hiệu, quy cách,<br />phẩm chất vật tư, dụng cụ<br />sản phẩm, hàng hóa
                         </th>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '90px' }}>Mã số</th>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '55px' }}>Đơn vị<br />tính</th>
-                        <th colSpan={2} className="border border-black px-2 py-1 text-center">Số lượng</th>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '80px' }}>Đơn giá</th>
-                        <th rowSpan={2} className="border border-black px-2 py-1 text-center align-bottom" style={{ width: '90px' }}>Thành<br />tiền</th>
+                        <th style={{ ...S.th, width: '8%' }} rowSpan={2}>Mã số</th>
+                        <th style={{ ...S.th, width: '8%' }} rowSpan={2}>Đơn vị<br />tính</th>
+                        <th style={{ ...S.th }} colSpan={2}>Số lượng</th>
+                        <th style={{ ...S.th, width: '14%' }} rowSpan={2}>Đơn giá</th>
+                        <th style={{ ...S.th, width: '16%' }} rowSpan={2}>Thành tiền</th>
                     </tr>
                     <tr>
-                        <th className="border border-black px-2 py-1 text-center" style={{ width: '55px' }}>Yêu<br />cầu</th>
-                        <th className="border border-black px-2 py-1 text-center" style={{ width: '55px' }}>Thực<br />xuất</th>
-                    </tr>
-                    <tr style={{ fontSize: '11px' }}>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">A</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">B</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">C</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">D</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">1</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">2</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">3</th>
-                        <th className="border border-black px-1 py-0.5 text-center font-normal">4</th>
+                        <th style={{ ...S.th, width: '10%' }}>Yêu cầu</th>
+                        <th style={{ ...S.th, width: '10%' }}>Thực xuất</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((row, idx) => (
                         <tr key={idx}>
-                            <td className="border border-black px-2 py-1.5 text-center">{row.name ? row.stt : ''}</td>
-                            <td className="border border-black px-2 py-1.5">{row.name}</td>
-                            <td className="border border-black px-2 py-1.5 text-center">{row.code}</td>
-                            <td className="border border-black px-2 py-1.5 text-center">{row.unit}</td>
-                            <td className="border border-black px-2 py-1.5 text-center">{row.qty !== '' ? String(row.qty).padStart(2, '0') : ''}</td>
-                            <td className="border border-black px-2 py-1.5 text-center"></td>
-                            <td className="border border-black px-2 py-1.5 text-right">{row.qty !== '' && order.unit_price ? formatNumber(order.unit_price) : ''}</td>
-                            <td className="border border-black px-2 py-1.5 text-right">{row.qty !== '' && order.unit_price ? formatNumber(row.qty * order.unit_price) : ''}</td>
+                            <td style={S.td}>{row.stt}</td>
+                            <td style={S.tdLeft}>{row.name}</td>
+                            <td style={S.td}>{row.code}</td>
+                            <td style={S.td}>{row.unit}</td>
+                            <td style={S.tdRight}>{row.qtyReq !== '' ? String(row.qtyReq).padStart(2, '0') : ''}</td>
+                            <td style={S.tdRight}>{row.qtyAct !== '' ? String(row.qtyAct).padStart(2, '0') : ''}</td>
+                            <td style={S.tdRight}>{row.price ? formatNumber(row.price) : ''}</td>
+                            <td style={S.tdRight}>{row.total ? formatNumber(row.total) : ''}</td>
                         </tr>
                     ))}
                     {/* Total row */}
-                    <tr className="font-bold">
-                        <td className="border border-black px-2 py-1.5"></td>
-                        <td className="border border-black px-2 py-1.5 text-center font-bold">Cộng:</td>
-                        <td className="border border-black px-2 py-1.5"></td>
-                        <td className="border border-black px-2 py-1.5"></td>
-                        <td className="border border-black px-2 py-1.5 text-center font-bold">{String(totalQty).padStart(2, '0')}</td>
-                        <td className="border border-black px-2 py-1.5"></td>
-                        <td className="border border-black px-2 py-1.5"></td>
-                        <td className="border border-black px-2 py-1.5 text-right font-bold">{order.total_amount ? formatNumber(order.total_amount) : ''}</td>
+                    <tr>
+                        <td style={S.tdBold}></td>
+                        <td style={S.tdBold}>Cộng</td>
+                        <td style={S.tdBold}></td>
+                        <td style={S.tdBold}></td>
+                        <td style={S.tdBoldRight}>{String(totalQty).padStart(2, '0')}</td>
+                        <td style={S.tdBoldRight}>{String(totalQty).padStart(2, '0')}</td>
+                        <td style={S.tdBold}></td>
+                        <td style={S.tdBoldRight}>{totalAmount ? formatNumber(totalAmount) : ''}</td>
                     </tr>
                 </tbody>
             </table>
 
+            {/* ===== SUMMARY ===== */}
+            <div style={S.summarySection}>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Tổng số tiền (Viết bằng chữ):</span>
+                    <span style={S.infoValue}>{totalAmount ? numberToVietnameseWords(totalAmount) : ''}</span>
+                </div>
+                <div style={S.infoRow}>
+                    <span style={S.infoLabel}>- Số chứng từ gốc kèm theo:</span>
+                    <span style={S.infoValue}></span>
+                </div>
+            </div>
 
+            {/* ===== DATE FOOTER ===== */}
+            <div style={S.dateFooter}>
+                Ngày {day} tháng {month} năm {year}
+            </div>
 
-            {/* Signatures */}
-            <div className="grid grid-cols-5 gap-2 text-center mt-4" style={{ fontSize: '12px' }}>
-                <div>
-                    <p className="font-bold">Người lập phiếu</p>
-                    <p className="italic text-xs">(Ký, họ tên)</p>
-                    <div className="h-20"></div>
+            {/* ===== SIGNATURES ===== */}
+            <div style={S.signatureSection}>
+                <div style={S.sigBlock}>
+                    <div style={S.sigTitle}>Người lập biểu</div>
+                    <div style={S.sigSubtitle}>(Ký, họ tên)</div>
+                    <div style={S.sigSpace}></div>
                 </div>
-                <div>
-                    <p className="font-bold">Người nhận hàng</p>
-                    <p className="italic text-xs">(Ký, họ tên)</p>
-                    <div className="h-20"></div>
+                <div style={S.sigBlock}>
+                    <div style={S.sigTitle}>Người nhận hàng</div>
+                    <div style={S.sigSubtitle}>(Ký, họ tên)</div>
+                    <div style={S.sigSpace}></div>
                 </div>
-                <div>
-                    <p className="font-bold">Thủ kho</p>
-                    <p className="italic text-xs">(Ký, họ tên)</p>
-                    <div className="h-20"></div>
+                <div style={S.sigBlock}>
+                    <div style={S.sigTitle}>Thủ kho</div>
+                    <div style={S.sigSubtitle}>(Ký, họ tên)</div>
+                    <div style={S.sigSpace}></div>
                 </div>
-                <div>
-                    <p className="font-bold">Kế toán trưởng</p>
-                    <p className="italic text-xs">(Hoặc bộ phận có<br />nhu cầu nhập)</p>
-                    <p className="italic text-xs">(Ký, họ tên)</p>
-                    <div className="h-20"></div>
+                <div style={S.sigBlock}>
+                    <div style={S.sigTitle}>Kế toán trưởng</div>
+                    <div style={S.sigSubtitle}>(Ký, họ tên)</div>
+                    <div style={S.sigSpace}></div>
                 </div>
-                <div>
-                    <p className="font-bold">Giám đốc</p>
-                    <p className="italic text-xs">(Ký, họ tên)</p>
-                    <div className="h-20"></div>
+                <div style={S.sigBlock}>
+                    <div style={S.sigTitle}>Giám đốc</div>
+                    <div style={S.sigSubtitle}>(Ký, họ tên, đóng dấu)</div>
+                    <div style={S.sigSpace}></div>
                 </div>
             </div>
         </div>

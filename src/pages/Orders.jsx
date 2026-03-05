@@ -23,6 +23,7 @@ import {
 import { useEffect, useState } from 'react';
 import { Bar as BarChartJS, Pie as PieChartJS } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
+import MachineHandoverPrintTemplate from '../components/MachineHandoverPrintTemplate';
 import OrderPrintTemplate from '../components/OrderPrintTemplate';
 import OrderFormModal from '../components/Orders/OrderFormModal';
 import OrderStatusUpdater from '../components/Orders/OrderStatusUpdater';
@@ -57,6 +58,7 @@ const Orders = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [ordersToPrint, setOrdersToPrint] = useState(null);
+    const [handoverToPrint, setHandoverToPrint] = useState(null);
     const [selectedIds, setSelectedIds] = useState([]);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -210,6 +212,12 @@ const Orders = () => {
 
     const handlePrint = (order) => {
         setOrdersToPrint(order);
+        // Auto-include machine handover for MAY orders
+        if (order.product_type?.startsWith('MAY')) {
+            setHandoverToPrint(order);
+        } else {
+            setHandoverToPrint(null);
+        }
         setTimeout(() => {
             window.print();
         }, 150);
@@ -362,8 +370,8 @@ const Orders = () => {
                 <button
                     onClick={() => setActiveView('list')}
                     className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'list'
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
-                            : 'text-[#6B7280] hover:text-[#374151]'
+                        ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
+                        : 'text-[#6B7280] hover:text-[#374151]'
                         }`}
                     style={activeView === 'list' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
@@ -372,8 +380,8 @@ const Orders = () => {
                 <button
                     onClick={() => setActiveView('stats')}
                     className={`px-6 py-3 text-sm font-semibold tracking-wide transition-colors ${activeView === 'stats'
-                            ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
-                            : 'text-[#6B7280] hover:text-[#374151]'
+                        ? 'text-[#2563EB] border-b-2 border-[#2563EB]'
+                        : 'text-[#6B7280] hover:text-[#374151]'
                         }`}
                     style={activeView === 'stats' ? { color: '#2563EB', borderBottomColor: '#2563EB' } : { color: '#6B7280' }}
                 >
@@ -746,7 +754,7 @@ const Orders = () => {
                                                         <button
                                                             onClick={() => handlePrint(order)}
                                                             className="text-[#9CA3AF] hover:text-[#2563EB] transition-colors p-1 rounded hover:bg-[#EFF6FF]"
-                                                            title="In phiếu xuất kho"
+                                                            title={order.product_type?.startsWith('MAY') ? 'In phiếu xuất kho + biên bản bàn giao máy' : 'In phiếu xuất kho'}
                                                         >
                                                             <Printer className="w-4 h-4" />
                                                         </button>
@@ -832,7 +840,9 @@ const Orders = () => {
 
                     {/* Hidden Print Template */}
                     <div className="print-only-content">
-                        <OrderPrintTemplate orders={ordersToPrint} />
+                        {ordersToPrint && <OrderPrintTemplate orders={ordersToPrint} />}
+                        {ordersToPrint && handoverToPrint && <div className="page-break" />}
+                        {handoverToPrint && <MachineHandoverPrintTemplate orders={handoverToPrint} />}
                     </div>
                 </>
             ) : (
